@@ -32,8 +32,8 @@
 		8FBEC23A2EB6D33400814EF4 = {
 			isa = PBXGroup;
 			children = (
-				8FBEC2452EB6D33500814EF4 /* MagnifyMyMusic */,
 				8FBEC2442EB6D33500814EF4 /* Products */,
+				8FBEC2452EB6D33500814EF4 /* MagnifyMyMusic */,
 			);
 			sourceTree = "<group>";
 		};
