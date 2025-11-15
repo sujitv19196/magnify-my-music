@@ -18,12 +18,22 @@ struct PreviewHelper {
         // Create a sample document
         let doc = SheetMusicDocument(name: "Moanin")
         
-        // Load test image from Assets and save to Documents (proper production flow)
-        if let testImage = UIImage(named: "TestSheetMusic1") {
-            if let filename = try? imageStore.save(testImage, documentName: doc.name, index: 0) {
-                doc.imagePaths = [filename]
+        // Load test images from Assets and save to Documents (proper production flow)
+        var imagePaths: [String] = []
+        
+        if let testImage1 = UIImage(named: "TestSheetMusic1") {
+            if let filename = try? imageStore.save(testImage1, documentName: doc.name, index: 0) {
+                imagePaths.append(filename)
             }
         }
+        
+        if let testImage2 = UIImage(named: "TestSheetMusic2") {
+            if let filename = try? imageStore.save(testImage2, documentName: doc.name, index: 1) {
+                imagePaths.append(filename)
+            }
+        }
+        
+        doc.imagePaths = imagePaths
         
         // Add sample frames aligned with actual staff systems in test.svg
         // SVG dimensions: 2976.38 × 4209.45, staff systems at specific Y positions
