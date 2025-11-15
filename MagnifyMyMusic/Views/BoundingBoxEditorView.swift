@@ -26,40 +26,46 @@ struct BoundingBoxEditorView: View {
                         .resizable()
                         .aspectRatio(contentMode: .fit)
                     
+                    let maxOrderIndex = document.frames.map { $0.orderIndex }.max() ?? -1
+                    
                     ForEach(framesForCurrentImage) { frame in
                         let boxWidth = frame.boundingBoxWidth * imageFrame.width
                         let boxHeight = frame.boundingBoxHeight * imageFrame.height
-                        let centerX = imageFrame.minX + (frame.boundingBoxX + frame.boundingBoxWidth / 2) * imageFrame.width
-                        let centerY = imageFrame.minY + (frame.boundingBoxY + frame.boundingBoxHeight / 2) * imageFrame.height
-                        let frameNumber = frameNumberInDocument(for: frame)
+                        let boxX = imageFrame.minX + frame.boundingBoxX * imageFrame.width
+                        let boxY = imageFrame.minY + frame.boundingBoxY * imageFrame.height
+                        let isLastFrame = frame.orderIndex == maxOrderIndex
                         
                         Rectangle()
                             .stroke(Color.blue, lineWidth: 2)
                             .frame(width: boxWidth, height: boxHeight)
-                            .overlay(alignment: .center) {
-                                // Frame number in center
-                                Text("\(frameNumber)")
-                                    .font(.system(size: 32, weight: .bold))
-                                    .foregroundColor(.blue)
-                                    .padding(8)
-                                    .background(Color.white.opacity(0.8))
-                                    .cornerRadius(8)
+                            .overlay(alignment: .leading) {
+                                // Frame number - center left of box
+                                Text("\(frame.orderIndex + 1)")
+                                    .font(.system(size: 24, weight: .bold))
+                                    .foregroundColor(.white)
+                                    .padding(6)
+                                    .background(Color.blue)
+                                    .cornerRadius(6)
+                                    .offset(x: -40)
                             }
-                            .overlay(alignment: .topTrailing) {
-                                // Delete button at top-right
-                                Button {
-                                    deleteFrame(frame)
-                                } label: {
-                                    Image(systemName: "xmark.circle.fill")
-                                        .font(.system(size: 28))
-                                        .foregroundColor(.red)
-                                        .background(Circle().fill(Color.white))
+                            .overlay(alignment: .trailing) {
+                                // Delete button - center right of box (only for last frame)
+                                if isLastFrame {
+                                    Button {
+                                        deleteFrame(frame)
+                                    } label: {
+                                        Image(systemName: "xmark.circle.fill")
+                                            .font(.system(size: 28))
+                                            .foregroundColor(.red)
+                                            .background(Circle().fill(Color.white))
+                                    }
+                                    .offset(x: 40)
                                 }
-                                .padding(4)
                             }
-                            .position(x: centerX, y: centerY)
-                            .id("\(frame.id)-\(frameNumber)")
+                            .position(x: boxX + boxWidth / 2, y: boxY + boxHeight / 2)
+                            .id("\(frame.id)-\(frame.orderIndex)")
                     }
+                    .drawingGroup()  // Composite frames into single GPU layer for better performance
                     
                     if let box = currentBox {
                         Rectangle()
@@ -94,10 +100,13 @@ struct BoundingBoxEditorView: View {
                                     height: box.height / imageFrame.height
                                 )
                                 
+                                // Get next available orderIndex
+                                let nextOrderIndex = (document.frames.map { $0.orderIndex }.max() ?? -1) + 1
+                                
                                 let frame = Frame(
                                     imagePath: imagePath,
                                     boundingBox: normalizedBox,
-                                    orderIndex: document.frames.count  // Append to end
+                                    orderIndex: nextOrderIndex
                                 )
                                 
                                 document.frames.append(frame)
@@ -156,14 +165,16 @@ struct BoundingBoxEditorView: View {
         document.frames.filter { $0.imagePath == imagePath }
     }
     
-    private func frameNumberInDocument(for frame: Frame) -> Int {
-        if let index = document.frames.firstIndex(where: { $0.id == frame.id }) {
-            return index + 1  // 1-based numbering
-        }
-        return 0
-    }
     
     private func deleteFrame(_ frame: Frame) {
+        // Only allow deletion of the last frame (highest orderIndex)
+        let maxOrderIndex = document.frames.map { $0.orderIndex }.max() ?? -1
+        
+        guard frame.orderIndex == maxOrderIndex else {
+            return  // Silently ignore deletion of non-last frames
+        }
+        
+        // Remove the frame (no renumbering needed)
         if let index = document.frames.firstIndex(where: { $0.id == frame.id }) {
             document.frames.remove(at: index)
         }
