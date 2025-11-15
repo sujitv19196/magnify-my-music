@@ -151,7 +151,7 @@ struct DrawingToolPickerView: View {
                 }
             }
         }
-        .presentationDetents([.medium, .large])
+        .presentationDetents([.large])
     }
     
     private func icon(for type: PKInkingTool.InkType) -> String {

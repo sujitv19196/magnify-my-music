@@ -32,6 +32,14 @@ struct FrameReaderView: View {
             VStack(spacing: 0) {
                 // Minimal toolbar
                 HStack {
+                    NavigationLink {
+                        DocumentEditorView(document: document)
+                    } label: {
+                        Image(systemName: "square.and.pencil")
+                            .font(.title2)
+                    }
+                    .padding(.horizontal)
+                    
                     Spacer()
                     
                     Button {
@@ -42,7 +50,7 @@ struct FrameReaderView: View {
                     }
                     .padding(.horizontal)
                 }
-                .padding(.vertical, 8)
+                .padding(.vertical, 4)
                 .background(Color(.systemGray6))
                 
                 // Scrollable, zoomable content using UIScrollView

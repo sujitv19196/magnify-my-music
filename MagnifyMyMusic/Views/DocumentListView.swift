@@ -22,7 +22,11 @@ struct DocumentListView: View {
             List {
                 ForEach(documents) { doc in
                     NavigationLink {
-                        DocumentEditorView(document: doc)
+                        if doc.frames.isEmpty {
+                            DocumentEditorView(document: doc)
+                        } else {
+                            FrameReaderView(document: doc)
+                        }
                     } label: {
                         VStack(alignment: .leading) {
                             Text(doc.name)
