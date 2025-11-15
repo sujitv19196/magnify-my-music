@@ -16,7 +16,7 @@ struct PreviewHelper {
         let imageStore = ImageStore()
         
         // Create a sample document
-        let doc = SheetMusicDocument(name: "Moonlight Sonata")
+        let doc = SheetMusicDocument(name: "Moanin")
         
         // Load test image from Assets and save to Documents (proper production flow)
         if let testImage = UIImage(named: "TestSheetMusic1") {

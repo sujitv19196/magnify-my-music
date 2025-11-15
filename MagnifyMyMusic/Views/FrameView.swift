@@ -21,23 +21,23 @@ struct FrameView: View {
             let aspectRatio = croppedImage.size.width / croppedImage.size.height
             
             ZStack {
-                Image(uiImage: croppedImage)
-                    .resizable()
+                    Image(uiImage: croppedImage)
+                        .resizable()
                     .aspectRatio(aspectRatio, contentMode: .fit)
-                    .allowsHitTesting(false)
+                        .allowsHitTesting(false)
                 
                 GeometryReader { geometry in
-                    PencilKitCanvas(
-                        canvasView: $canvas,
-                        drawing: $drawing,
-                        tool: tool,
-                        onSave: saveDrawing
-                    )
-                }
+                PencilKitCanvas(
+                    canvasView: $canvas,
+                    drawing: $drawing,
+                    tool: tool,
+                    onSave: saveDrawing
+                )
             }
+        }
             .aspectRatio(aspectRatio, contentMode: .fit)
             .task {
-                loadDrawing()
+            loadDrawing()
             }
         } else {
             Rectangle()

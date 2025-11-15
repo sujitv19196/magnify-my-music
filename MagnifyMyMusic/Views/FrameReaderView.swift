@@ -14,9 +14,11 @@ struct FrameReaderView: View {
     @StateObject private var session: ReadingSession
     @State private var showToolPicker = false
     
-    // Local zoom state (resets each time view appears)
-    @State private var currentZoom: CGFloat = 1.0
-    @State private var totalZoom: CGFloat = 1.0
+    // Zoom state managed by UIScrollView
+    @State private var zoomScale: CGFloat = 1.0
+    
+    // Frame sizing - leave room for toolbar
+    private let frameHeightRatio: CGFloat = 0.85
     
     private let imageStore = ImageStore()
     
@@ -43,8 +45,8 @@ struct FrameReaderView: View {
                 .padding(.vertical, 8)
                 .background(Color(.systemGray6))
                 
-                // Scrollable, zoomable content
-                ScrollView(.horizontal, showsIndicators: true) {
+                // Scrollable, zoomable content using UIScrollView
+                ZoomableScrollView(zoomScale: $zoomScale) {
                     HStack(spacing: 0) {
                         ForEach(document.frames) { frame in
                             if let image = try? imageStore.load(frame.imagePath) {
@@ -53,31 +55,16 @@ struct FrameReaderView: View {
                                     image: image,
                                     tool: session.currentTool
                                 )
-                                .frame(height: geometry.size.height * 0.85)
-                                .brightness(session.brightness)
-                                .contrast(session.contrast)
+                                .frame(height: geometry.size.height * frameHeightRatio)
                             }
                         }
                     }
-                    .scaleEffect(totalZoom * currentZoom, anchor: .leading)
-                    .gesture(
-                        MagnificationGesture()
-                            .onChanged { value in
-                                currentZoom = value
-                            }
-                            .onEnded { value in
-                                totalZoom *= value
-                                currentZoom = 1.0
-                            }
-                    )
                 }
                 .onAppear {
-                    totalZoom = 1.0  // Start at 1x, frames already sized to screen
+                    zoomScale = 1.0  // Start at 1x
                 }
             }
         }
-        .navigationTitle("Reading")
-        .navigationBarTitleDisplayMode(.inline)
         .sheet(isPresented: $showToolPicker) {
             DrawingToolPickerView(currentTool: $session.currentTool)
         }
