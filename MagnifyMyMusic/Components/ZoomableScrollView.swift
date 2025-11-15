@@ -80,6 +80,29 @@ struct ZoomableScrollView<Content: View>: UIViewRepresentable {
         func scrollViewDidZoom(_ scrollView: UIScrollView) {
             // Update binding in real-time
             zoomScale = scrollView.zoomScale
+            
+            // Center content when smaller than viewport
+            centerContent(in: scrollView)
+        }
+        
+        private func centerContent(in scrollView: UIScrollView) {
+            guard let contentView = hostingController?.view else { return }
+            
+            let contentWidth = contentView.frame.width * scrollView.zoomScale
+            let contentHeight = contentView.frame.height * scrollView.zoomScale
+            
+            let scrollViewWidth = scrollView.bounds.width
+            let scrollViewHeight = scrollView.bounds.height
+            
+            let horizontalInset = max(0, (scrollViewWidth - contentWidth) / 2)
+            let verticalInset = max(0, (scrollViewHeight - contentHeight) / 2)
+            
+            scrollView.contentInset = UIEdgeInsets(
+                top: verticalInset,
+                left: horizontalInset,
+                bottom: verticalInset,
+                right: horizontalInset
+            )
         }
     }
 }
