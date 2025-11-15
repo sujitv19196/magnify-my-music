@@ -39,7 +39,7 @@ struct DocumentListView: View {
                 }
                 .onDelete(perform: deleteDocuments)
             }
-            .navigationTitle("Sheet Music")
+            .navigationTitle("Magnify My Music")
             .toolbar {
                 ToolbarItem(placement: .primaryAction) {
                     Button {

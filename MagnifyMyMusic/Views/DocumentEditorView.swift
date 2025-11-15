@@ -7,10 +7,12 @@
 
 import SwiftUI
 import SwiftData
+import PhotosUI
 
 struct DocumentEditorView: View {
     @Bindable var document: SheetMusicDocument
     @State private var selectedImageIndex = 0
+    @State private var selectedPhotos: [PhotosPickerItem] = []
     
     private let imageStore = ImageStore()
     
@@ -41,6 +43,12 @@ struct DocumentEditorView: View {
         }
         .navigationTitle(document.name)
         .toolbar {
+            ToolbarItem(placement: .navigationBarTrailing) {
+                PhotosPicker(selection: $selectedPhotos, matching: .images) {
+                    Label("Add Images", systemImage: "photo.on.rectangle.angled")
+                }
+            }
+            
             ToolbarItem(placement: .primaryAction) {
                 NavigationLink {
                     FrameReaderView(document: document)
@@ -50,6 +58,31 @@ struct DocumentEditorView: View {
                 .disabled(document.frames.isEmpty)
             }
         }
+        .onChange(of: selectedPhotos) { oldValue, newValue in
+            Task {
+                await loadImages(from: newValue)
+            }
+        }
+    }
+    
+    private func loadImages(from items: [PhotosPickerItem]) async {
+        for item in items {
+            guard let data = try? await item.loadTransferable(type: Data.self),
+                  let uiImage = UIImage(data: data) else {
+                continue
+            }
+            
+            // Save image and add to document
+            let currentIndex = document.imagePaths.count
+            if let filename = try? imageStore.save(uiImage, documentName: document.name, index: currentIndex) {
+                document.imagePaths.append(filename)
+                // Switch to the newly added image
+                selectedImageIndex = document.imagePaths.count - 1
+            }
+        }
+        
+        // Clear selection
+        selectedPhotos = []
     }
 }
 
