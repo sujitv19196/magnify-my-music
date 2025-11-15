@@ -96,7 +96,8 @@ struct BoundingBoxEditorView: View {
                                 
                                 let frame = Frame(
                                     imagePath: imagePath,
-                                    boundingBox: normalizedBox
+                                    boundingBox: normalizedBox,
+                                    orderIndex: document.frames.count  // Append to end
                                 )
                                 
                                 document.frames.append(frame)

@@ -48,7 +48,7 @@ struct FrameReaderView: View {
                 // Scrollable, zoomable content using UIScrollView
                 ZoomableScrollView(zoomScale: $zoomScale) {
                     HStack(spacing: 0) {
-                        ForEach(document.frames) { frame in
+                        ForEach(session.playbackSequence) { frame in
                             if let image = try? imageStore.load(frame.imagePath) {
                                 FrameView(
                                     frame: frame,
@@ -61,6 +61,7 @@ struct FrameReaderView: View {
                     }
                 }
                 .onAppear {
+                    session.buildPlaybackSequence()
                     zoomScale = 1.0  // Start at 1x
                 }
             }

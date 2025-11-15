@@ -14,6 +14,6 @@ struct MagnifyMyMusicApp: App {
         WindowGroup {
             ContentView()
         }
-        .modelContainer(for: [SheetMusicDocument.self, Frame.self])
+        .modelContainer(for: [SheetMusicDocument.self, Frame.self, Repeat.self])
     }
 }

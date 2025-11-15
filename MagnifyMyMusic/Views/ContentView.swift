@@ -16,5 +16,5 @@ struct ContentView: View {
 
 #Preview {
     ContentView()
-        .modelContainer(for: [SheetMusicDocument.self, Frame.self], inMemory: true)
+        .modelContainer(for: [SheetMusicDocument.self, Frame.self, Repeat.self], inMemory: true)
 }

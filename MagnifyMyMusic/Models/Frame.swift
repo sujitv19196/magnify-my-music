@@ -13,6 +13,7 @@ internal import CoreGraphics
 class Frame {
     @Attribute(.unique) var id: UUID
     var imagePath: String  // Direct reference to image file
+    var orderIndex: Int  // Explicit ordering for playback sequence
     
     // CGRect stored as separate properties (SwiftData requirement)
     var boundingBoxX: Double
@@ -37,9 +38,10 @@ class Frame {
         }
     }
     
-    init(imagePath: String, boundingBox: CGRect) {
+    init(imagePath: String, boundingBox: CGRect, orderIndex: Int) {
         self.id = UUID()
         self.imagePath = imagePath
+        self.orderIndex = orderIndex
         self.boundingBoxX = boundingBox.origin.x
         self.boundingBoxY = boundingBox.origin.y
         self.boundingBoxWidth = boundingBox.width

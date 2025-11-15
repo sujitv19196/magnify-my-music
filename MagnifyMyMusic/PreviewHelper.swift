@@ -25,32 +25,38 @@ struct PreviewHelper {
             }
         }
         
-        // Add sample frames with some bounding boxes
-        // Full-width frames, 1/10 page height each, stacked vertically like sheet music lines
+        // Add sample frames aligned with actual staff systems in test.svg
+        // SVG dimensions: 2976.38 × 4209.45, staff systems at specific Y positions
+        // Including space above/below each staff for dynamics and articulations
         if !doc.imagePaths.isEmpty {
             let frame1 = Frame(
                 imagePath: doc.imagePaths[0],
-                boundingBox: CGRect(x: 0.0, y: 0.0, width: 1.0, height: 0.1)
+                boundingBox: CGRect(x: 0.0, y: 0.14, width: 1.0, height: 0.08),  // Staff 1 (14-22%)
+                orderIndex: 0
             )
             
             let frame2 = Frame(
                 imagePath: doc.imagePaths[0],
-                boundingBox: CGRect(x: 0.0, y: 0.15, width: 1.0, height: 0.1)
+                boundingBox: CGRect(x: 0.0, y: 0.22, width: 1.0, height: 0.08),  // Staff 2 (22-30%)
+                orderIndex: 1
             )
             
             let frame3 = Frame(
                 imagePath: doc.imagePaths[0],
-                boundingBox: CGRect(x: 0.0, y: 0.30, width: 1.0, height: 0.1)
+                boundingBox: CGRect(x: 0.0, y: 0.30, width: 1.0, height: 0.08),  // Staff 3 (30-38%)
+                orderIndex: 2
             )
             
             let frame4 = Frame(
                 imagePath: doc.imagePaths[0],
-                boundingBox: CGRect(x: 0.0, y: 0.45, width: 1.0, height: 0.1)
+                boundingBox: CGRect(x: 0.0, y: 0.37, width: 1.0, height: 0.08),  // Staff 4 (37-45%)
+                orderIndex: 3
             )
             
             let frame5 = Frame(
                 imagePath: doc.imagePaths[0],
-                boundingBox: CGRect(x: 0.0, y: 0.60, width: 1.0, height: 0.1)
+                boundingBox: CGRect(x: 0.0, y: 0.45, width: 1.0, height: 0.08),  // Staff 5 (45-53%)
+                orderIndex: 4
             )
             
             doc.frames = [frame1, frame2, frame3, frame4, frame5]
@@ -65,7 +71,7 @@ struct PreviewHelper {
     static func createPreviewContainer() -> ModelContainer {
         let config = ModelConfiguration(isStoredInMemoryOnly: true)
         let container = try! ModelContainer(
-            for: SheetMusicDocument.self, Frame.self,
+            for: SheetMusicDocument.self, Frame.self, Repeat.self,
             configurations: config
         )
         return container

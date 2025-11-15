@@ -24,6 +24,10 @@ class SheetMusicDocument {
         didSet { modifiedAt = Date() }
     }
     
+    var repeats: [Repeat] {    // Repeat structures for navigation
+        didSet { modifiedAt = Date() }
+    }
+    
     var createdAt: Date
     var modifiedAt: Date
     
@@ -32,6 +36,7 @@ class SheetMusicDocument {
         self.name = name
         self.imagePaths = []
         self.frames = []
+        self.repeats = []
         self.createdAt = Date()
         self.modifiedAt = Date()
     }

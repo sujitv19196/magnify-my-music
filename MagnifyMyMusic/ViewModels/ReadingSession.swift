@@ -19,6 +19,7 @@ class ReadingSession: ObservableObject {
     // Reading/playback state
     @Published var currentFrameIndex: Int = 0
     @Published var horizontalScrollOffset: CGFloat = 0.0
+    @Published private(set) var playbackSequence: [Frame] = []
     
     // User preferences stored in UserDefaults
     var pedalScrollDistance: CGFloat {
@@ -33,6 +34,11 @@ class ReadingSession: ObservableObject {
     
     func advanceByPedal() {
         horizontalScrollOffset += pedalScrollDistance
+    }
+    
+    func buildPlaybackSequence() {
+        // For now: just sort by orderIndex, ignore repeats
+        playbackSequence = document.frames.sorted { $0.orderIndex < $1.orderIndex }
     }
 }
 
