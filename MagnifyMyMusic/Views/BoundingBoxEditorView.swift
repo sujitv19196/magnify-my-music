@@ -19,28 +19,28 @@ struct BoundingBoxEditorView: View {
     var body: some View {
         GeometryReader { geometry in
             if let image = try? imageStore.load(imagePath) {
-                let imageFrame = calculateImageFrame(containerSize: geometry.size, imageSize: image.size)
+                let imageSegment = calculateImageSegment(containerSize: geometry.size, imageSize: image.size)
                 
                 ZStack {
                     Image(uiImage: image)
                         .resizable()
                         .aspectRatio(contentMode: .fit)
                     
-                    let maxOrderIndex = document.frames.map { $0.orderIndex }.max() ?? -1
+                    let maxOrderIndex = document.segments.map { $0.orderIndex }.max() ?? -1
                     
-                    ForEach(framesForCurrentImage) { frame in
-                        let boxWidth = frame.boundingBoxWidth * imageFrame.width
-                        let boxHeight = frame.boundingBoxHeight * imageFrame.height
-                        let boxX = imageFrame.minX + frame.boundingBoxX * imageFrame.width
-                        let boxY = imageFrame.minY + frame.boundingBoxY * imageFrame.height
-                        let isLastFrame = frame.orderIndex == maxOrderIndex
+                    ForEach(segmentsForCurrentImage) { segment in
+                        let boxWidth = segment.boundingBoxWidth * imageSegment.width
+                        let boxHeight = segment.boundingBoxHeight * imageSegment.height
+                        let boxX = imageSegment.minX + segment.boundingBoxX * imageSegment.width
+                        let boxY = imageSegment.minY + segment.boundingBoxY * imageSegment.height
+                        let isLastSegment = segment.orderIndex == maxOrderIndex
                         
                         Rectangle()
                             .stroke(Color.blue, lineWidth: 2)
                             .frame(width: boxWidth, height: boxHeight)
                             .overlay(alignment: .leading) {
-                                // Frame number - center left of box
-                                Text("\(frame.orderIndex + 1)")
+                                // Segment number - center left of box
+                                Text("\(segment.orderIndex + 1)")
                                     .font(.system(size: 24, weight: .bold))
                                     .foregroundColor(.white)
                                     .padding(6)
@@ -49,10 +49,10 @@ struct BoundingBoxEditorView: View {
                                     .offset(x: -40)
                             }
                             .overlay(alignment: .trailing) {
-                                // Delete button - center right of box (only for last frame)
-                                if isLastFrame {
+                                // Delete button - center right of box (only for last segment)
+                                if isLastSegment {
                                     Button {
-                                        deleteFrame(frame)
+                                        deleteSegment(segment)
                                     } label: {
                                         Image(systemName: "xmark.circle.fill")
                                             .font(.system(size: 28))
@@ -63,9 +63,9 @@ struct BoundingBoxEditorView: View {
                                 }
                             }
                             .position(x: boxX + boxWidth / 2, y: boxY + boxHeight / 2)
-                            .id("\(frame.id)-\(frame.orderIndex)")
+                            .id("\(segment.id)-\(segment.orderIndex)")
                     }
-                    .drawingGroup()  // Composite frames into single GPU layer for better performance
+                    .drawingGroup()  // Composite segments into single GPU layer for better performance
                     
                     if let box = currentBox {
                         Rectangle()
@@ -80,8 +80,8 @@ struct BoundingBoxEditorView: View {
                     DragGesture(minimumDistance: 0)
                         .onChanged { value in
                             // Clamp coordinates to image bounds
-                            let clampedStart = clampToImage(point: dragStart, imageFrame: imageFrame)
-                            let clampedCurrent = clampToImage(point: value.location, imageFrame: imageFrame)
+                            let clampedStart = clampToImage(point: dragStart, imageSegment: imageSegment)
+                            let clampedCurrent = clampToImage(point: value.location, imageSegment: imageSegment)
                             
                             let width = abs(clampedCurrent.x - clampedStart.x)
                             let height = abs(clampedCurrent.y - clampedStart.y)
@@ -92,24 +92,24 @@ struct BoundingBoxEditorView: View {
                         }
                         .onEnded { value in
                             if let box = currentBox, box.width > 20, box.height > 20 {
-                                // Normalize relative to image frame, not container
+                                // Normalize relative to image segment, not container
                                 let normalizedBox = CGRect(
-                                    x: (box.origin.x - imageFrame.minX) / imageFrame.width,
-                                    y: (box.origin.y - imageFrame.minY) / imageFrame.height,
-                                    width: box.width / imageFrame.width,
-                                    height: box.height / imageFrame.height
+                                    x: (box.origin.x - imageSegment.minX) / imageSegment.width,
+                                    y: (box.origin.y - imageSegment.minY) / imageSegment.height,
+                                    width: box.width / imageSegment.width,
+                                    height: box.height / imageSegment.height
                                 )
                                 
                                 // Get next available orderIndex
-                                let nextOrderIndex = (document.frames.map { $0.orderIndex }.max() ?? -1) + 1
+                                let nextOrderIndex = (document.segments.map { $0.orderIndex }.max() ?? -1) + 1
                                 
-                                let frame = Frame(
+                                let segment = Segment(
                                     imagePath: imagePath,
                                     boundingBox: normalizedBox,
                                     orderIndex: nextOrderIndex
                                 )
                                 
-                                document.frames.append(frame)
+                                document.segments.append(segment)
                             }
                             
                             currentBox = nil
@@ -127,56 +127,56 @@ struct BoundingBoxEditorView: View {
         }
     }
     
-    private func calculateImageFrame(containerSize: CGSize, imageSize: CGSize) -> CGRect {
+    private func calculateImageSegment(containerSize: CGSize, imageSize: CGSize) -> CGRect {
         let imageAspect = imageSize.width / imageSize.height
         let containerAspect = containerSize.width / containerSize.height
         
-        let frameSize: CGSize
+        let segmentSize: CGSize
         if imageAspect > containerAspect {
             // Image is wider - fit to width
-            frameSize = CGSize(
+            segmentSize = CGSize(
                 width: containerSize.width,
                 height: containerSize.width / imageAspect
             )
         } else {
             // Image is taller - fit to height
-            frameSize = CGSize(
+            segmentSize = CGSize(
                 width: containerSize.height * imageAspect,
                 height: containerSize.height
             )
         }
         
         let origin = CGPoint(
-            x: (containerSize.width - frameSize.width) / 2,
-            y: (containerSize.height - frameSize.height) / 2
+            x: (containerSize.width - segmentSize.width) / 2,
+            y: (containerSize.height - segmentSize.height) / 2
         )
         
-        return CGRect(origin: origin, size: frameSize)
+        return CGRect(origin: origin, size: segmentSize)
     }
     
-    private func clampToImage(point: CGPoint, imageFrame: CGRect) -> CGPoint {
+    private func clampToImage(point: CGPoint, imageSegment: CGRect) -> CGPoint {
         return CGPoint(
-            x: min(max(point.x, imageFrame.minX), imageFrame.maxX),
-            y: min(max(point.y, imageFrame.minY), imageFrame.maxY)
+            x: min(max(point.x, imageSegment.minX), imageSegment.maxX),
+            y: min(max(point.y, imageSegment.minY), imageSegment.maxY)
         )
     }
     
-    private var framesForCurrentImage: [Frame] {
-        document.frames.filter { $0.imagePath == imagePath }
+    private var segmentsForCurrentImage: [Segment] {
+        document.segments.filter { $0.imagePath == imagePath }
     }
     
     
-    private func deleteFrame(_ frame: Frame) {
-        // Only allow deletion of the last frame (highest orderIndex)
-        let maxOrderIndex = document.frames.map { $0.orderIndex }.max() ?? -1
+    private func deleteSegment(_ segment: Segment) {
+        // Only allow deletion of the last segment (highest orderIndex)
+        let maxOrderIndex = document.segments.map { $0.orderIndex }.max() ?? -1
         
-        guard frame.orderIndex == maxOrderIndex else {
-            return  // Silently ignore deletion of non-last frames
+        guard segment.orderIndex == maxOrderIndex else {
+            return  // Silently ignore deletion of non-last segments
         }
         
-        // Remove the frame (no renumbering needed)
-        if let index = document.frames.firstIndex(where: { $0.id == frame.id }) {
-            document.frames.remove(at: index)
+        // Remove the segment (no renumbering needed)
+        if let index = document.segments.firstIndex(where: { $0.id == segment.id }) {
+            document.segments.remove(at: index)
         }
     }
 }

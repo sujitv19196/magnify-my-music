@@ -22,16 +22,16 @@ struct DocumentListView: View {
             List {
                 ForEach(documents) { doc in
                     NavigationLink {
-                        if doc.frames.isEmpty {
+                        if doc.segments.isEmpty {
                             DocumentEditorView(document: doc)
                         } else {
-                            FrameReaderView(document: doc)
+                            SegmentReaderView(document: doc)
                         }
                     } label: {
                         VStack(alignment: .leading) {
                             Text(doc.name)
                                 .font(.headline)
-                            Text("\(doc.frames.count) frames")
+                            Text("\(doc.segments.count) segments")
                                 .font(.caption)
                                 .foregroundColor(.secondary)
                         }

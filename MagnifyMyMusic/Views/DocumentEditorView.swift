@@ -51,11 +51,11 @@ struct DocumentEditorView: View {
             
             ToolbarItem(placement: .primaryAction) {
                 NavigationLink {
-                    FrameReaderView(document: document)
+                    SegmentReaderView(document: document)
                 } label: {
                     Label("Read", systemImage: "book")
                 }
-                .disabled(document.frames.isEmpty)
+                .disabled(document.segments.isEmpty)
             }
         }
         .onChange(of: selectedPhotos) { oldValue, newValue in

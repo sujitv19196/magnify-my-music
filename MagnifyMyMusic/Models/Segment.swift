@@ -1,5 +1,5 @@
 //
-//  Frame.swift
+//  Segment.swift
 //  MagnifyMyMusic
 //
 //  Created by Sujit Varadhan on 11/1/25.
@@ -10,21 +10,28 @@ import Foundation
 internal import CoreGraphics
 
 @Model
-class Frame {
+class Segment {
     @Attribute(.unique) var id: UUID
-    var imagePath: String  // Direct reference to image file
-    var orderIndex: Int  // Explicit ordering for playback sequence
+    /// Direct reference to image file
+    var imagePath: String  
+
+    /// Explicit ordering for playback sequence
+    var orderIndex: Int  
     
-    // CGRect stored as separate properties (SwiftData requirement)
     var boundingBoxX: Double
     var boundingBoxY: Double
     var boundingBoxWidth: Double
     var boundingBoxHeight: Double
+
+    var markers: [NavigationMarker]
     
-    var label: String?  // Optional user label
-    var drawingData: Data?  // Serialized PKDrawing
+    /// An optional user-provided label for this segment (e.g., "Chorus", "Verse").
+    var label: String?
     
-    // Computed property for convenience
+    /// Serialized PKDrawing
+    var drawingData: Data?  
+    
+    /// Bounding box in normalized 0-1 coordinates relative to source image
     var boundingBox: CGRect {
         get { 
             CGRect(x: boundingBoxX, y: boundingBoxY, 
@@ -47,6 +54,7 @@ class Frame {
         self.boundingBoxWidth = boundingBox.width
         self.boundingBoxHeight = boundingBox.height
         self.drawingData = nil
+        self.markers = []
     }
 }
 

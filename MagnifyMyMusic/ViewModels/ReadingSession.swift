@@ -17,9 +17,9 @@ class ReadingSession: ObservableObject {
     @Published var currentTool: PKInkingTool
     
     // Reading/playback state
-    @Published var currentFrameIndex: Int = 0
+    @Published var currentSegmentIndex: Int = 0
     @Published var horizontalScrollOffset: CGFloat = 0.0
-    @Published private(set) var playbackSequence: [Frame] = []
+    @Published private(set) var playbackSequence: [Segment] = []
     
     // User preferences stored in UserDefaults
     var pedalScrollDistance: CGFloat {
@@ -38,7 +38,7 @@ class ReadingSession: ObservableObject {
     
     func buildPlaybackSequence() {
         // For now: just sort by orderIndex, ignore repeats
-        playbackSequence = document.frames.sorted { $0.orderIndex < $1.orderIndex }
+        playbackSequence = document.segments.sorted { $0.orderIndex < $1.orderIndex }
     }
 }
 

@@ -1,5 +1,5 @@
 //
-//  FrameReaderView.swift
+//  SegmentReaderView.swift
 //  MagnifyMyMusic
 //
 //  Created by Sujit Varadhan on 11/1/25.
@@ -9,7 +9,7 @@ import SwiftUI
 import PencilKit
 import SwiftData
 
-struct FrameReaderView: View {
+struct SegmentReaderView: View {
     @Bindable var document: SheetMusicDocument
     @StateObject private var session: ReadingSession
     @State private var showToolPicker = false
@@ -17,8 +17,8 @@ struct FrameReaderView: View {
     // Zoom state managed by UIScrollView
     @State private var zoomScale: CGFloat = 1.0
     
-    // Frame sizing - leave room for toolbar
-    private let frameHeightRatio: CGFloat = 0.85
+    // Segment sizing - leave room for toolbar
+    private let segmentHeightRatio: CGFloat = 0.85
     
     private let imageStore = ImageStore()
     
@@ -56,14 +56,14 @@ struct FrameReaderView: View {
                 // Scrollable, zoomable content using UIScrollView
                 ZoomableScrollView(zoomScale: $zoomScale) {
                     HStack(spacing: 0) {
-                        ForEach(session.playbackSequence) { frame in
-                            if let image = try? imageStore.load(frame.imagePath) {
-                                FrameView(
-                                    frame: frame,
+                        ForEach(session.playbackSequence) { segment in
+                            if let image = try? imageStore.load(segment.imagePath) {
+                                SegmentView(
+                                    segment: segment,
                                     image: image,
                                     tool: session.currentTool
                                 )
-                                .frame(height: geometry.size.height * frameHeightRatio)
+                                .frame(height: geometry.size.height * segmentHeightRatio)
                             }
                         }
                     }
@@ -89,7 +89,7 @@ struct FrameReaderView: View {
     let document = PreviewHelper.createSampleDocument(in: container)
     
     return NavigationStack {
-        FrameReaderView(document: document)
+        SegmentReaderView(document: document)
     }
     .modelContainer(container)
 }

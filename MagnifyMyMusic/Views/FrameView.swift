@@ -1,5 +1,5 @@
 //
-//  FrameView.swift
+//  SegmentView.swift
 //  MagnifyMyMusic
 //
 //  Created by Sujit Varadhan on 11/1/25.
@@ -8,8 +8,8 @@
 import SwiftUI
 import PencilKit
 
-struct FrameView: View {
-    @Bindable var frame: Frame
+struct SegmentView: View {
+    @Bindable var segment: Segment
     let image: UIImage
     let tool: PKInkingTool
     
@@ -17,7 +17,7 @@ struct FrameView: View {
     @State private var drawing = PKDrawing()
     
     var body: some View {
-        if let croppedImage = image.cropped(to: frame.boundingBox) {
+        if let croppedImage = image.cropped(to: segment.boundingBox) {
             let aspectRatio = croppedImage.size.width / croppedImage.size.height
             
             ZStack {
@@ -43,12 +43,12 @@ struct FrameView: View {
             Rectangle()
                 .fill(Color.red.opacity(0.3))
                 .frame(width: 200, height: 200)
-                .overlay(Text("Failed to load frame"))
+                .overlay(Text("Failed to load segment"))
         }
     }
     
     private func loadDrawing() {
-        if let data = frame.drawingData,
+        if let data = segment.drawingData,
            let savedDrawing = try? PKDrawing(data: data) {
             drawing = savedDrawing
             canvas.drawing = savedDrawing
@@ -56,7 +56,7 @@ struct FrameView: View {
     }
     
     private func saveDrawing() {
-        frame.drawingData = drawing.dataRepresentation()
+        segment.drawingData = drawing.dataRepresentation()
     }
 }
 

@@ -35,41 +35,41 @@ struct PreviewHelper {
         
         doc.imagePaths = imagePaths
         
-        // Add sample frames aligned with actual staff systems in test.svg
+        // Add sample segments aligned with actual staff systems in test.svg
         // SVG dimensions: 2976.38 × 4209.45, staff systems at specific Y positions
         // Including space above/below each staff for dynamics and articulations
         if !doc.imagePaths.isEmpty {
-            let frame1 = Frame(
+            let segment1 = Segment(
                 imagePath: doc.imagePaths[0],
                 boundingBox: CGRect(x: 0.0, y: 0.14, width: 1.0, height: 0.08),  // Staff 1 (14-22%)
                 orderIndex: 0
             )
             
-            let frame2 = Frame(
+            let segment2 = Segment(
                 imagePath: doc.imagePaths[0],
                 boundingBox: CGRect(x: 0.0, y: 0.22, width: 1.0, height: 0.08),  // Staff 2 (22-30%)
                 orderIndex: 1
             )
             
-            let frame3 = Frame(
+            let segment3 = Segment(
                 imagePath: doc.imagePaths[0],
                 boundingBox: CGRect(x: 0.0, y: 0.30, width: 1.0, height: 0.08),  // Staff 3 (30-38%)
                 orderIndex: 2
             )
             
-            let frame4 = Frame(
+            let segment4 = Segment(
                 imagePath: doc.imagePaths[0],
                 boundingBox: CGRect(x: 0.0, y: 0.37, width: 1.0, height: 0.08),  // Staff 4 (37-45%)
                 orderIndex: 3
             )
             
-            let frame5 = Frame(
+            let segment5 = Segment(
                 imagePath: doc.imagePaths[0],
                 boundingBox: CGRect(x: 0.0, y: 0.45, width: 1.0, height: 0.08),  // Staff 5 (45-53%)
                 orderIndex: 4
             )
             
-            doc.frames = [frame1, frame2, frame3, frame4, frame5]
+            doc.segments = [segment1, segment2, segment3, segment4, segment5]
         }
         
         context.insert(doc)
@@ -81,7 +81,7 @@ struct PreviewHelper {
     static func createPreviewContainer() -> ModelContainer {
         let config = ModelConfiguration(isStoredInMemoryOnly: true)
         let container = try! ModelContainer(
-            for: SheetMusicDocument.self, Frame.self, Repeat.self,
+            for: SheetMusicDocument.self, Segment.self, NavigationMarker.self,
             configurations: config
         )
         return container

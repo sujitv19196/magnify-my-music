@@ -16,15 +16,11 @@ class SheetMusicDocument {
         didSet { modifiedAt = Date() }
     }
     
-    var imagePaths: [String] {  // Filenames: "DocumentName_0.jpg", "DocumentName_1.jpg"
+    var imagePaths: [String] {
         didSet { modifiedAt = Date() }
     }
     
-    var frames: [Frame] {      // Array order IS the frame sequence
-        didSet { modifiedAt = Date() }
-    }
-    
-    var repeats: [Repeat] {    // Repeat structures for navigation
+    var segments: [Segment] {
         didSet { modifiedAt = Date() }
     }
     
@@ -35,8 +31,7 @@ class SheetMusicDocument {
         self.id = UUID()
         self.name = name
         self.imagePaths = []
-        self.frames = []
-        self.repeats = []
+        self.segments = []
         self.createdAt = Date()
         self.modifiedAt = Date()
     }
