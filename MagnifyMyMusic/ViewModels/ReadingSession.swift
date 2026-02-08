@@ -19,7 +19,7 @@ class ReadingSession: ObservableObject {
     // Reading/playback state
     @Published var currentSegmentIndex: Int = 0
     @Published var horizontalScrollOffset: CGFloat = 0.0
-    @Published private(set) var playbackSequence: [Segment] = []
+    @Published private(set) var playbackSequence: [PlaybackStep] = []
     
     // User preferences stored in UserDefaults
     var pedalScrollDistance: CGFloat {
@@ -37,8 +37,9 @@ class ReadingSession: ObservableObject {
     }
     
     func buildPlaybackSequence() {
-        // For now: just sort by orderIndex, ignore repeats
-        playbackSequence = document.segments.sorted { $0.orderIndex < $1.orderIndex }
+        playbackSequence = NavigationGraphWalker.buildPlaybackSequence(
+            from: document.segments
+        )
     }
 }
 

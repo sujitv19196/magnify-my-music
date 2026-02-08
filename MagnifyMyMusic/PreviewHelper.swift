@@ -69,6 +69,27 @@ struct PreviewHelper {
                 orderIndex: 4
             )
             
+            // -- Add navigation markers --
+
+            // Simple repeat: segment2 through segment3 plays twice
+            segment2.markers = [
+                NavigationMarker(type: .repeatForward, xPosition: 0.0)
+            ]
+            segment3.markers = [
+                NavigationMarker(type: .repeatBackward(), xPosition: 1.0)
+            ]
+
+            // Volta endings on segment4 and segment5:
+            // Pass 1 → play segment4, Pass 2 → play segment5
+            segment4.markers = [
+                NavigationMarker(type: .repeatForward, xPosition: 0.0),
+                NavigationMarker(type: .volta(numbers: [1]), xPosition: 0.3)
+            ]
+            segment5.markers = [
+                NavigationMarker(type: .volta(numbers: [2]), xPosition: 0.0),
+                NavigationMarker(type: .finalVoltaEnd, xPosition: 1.0)
+            ]
+
             doc.segments = [segment1, segment2, segment3, segment4, segment5]
         }
         

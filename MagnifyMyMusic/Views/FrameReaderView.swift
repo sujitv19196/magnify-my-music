@@ -56,10 +56,10 @@ struct SegmentReaderView: View {
                 // Scrollable, zoomable content using UIScrollView
                 ZoomableScrollView(zoomScale: $zoomScale) {
                     HStack(spacing: 0) {
-                        ForEach(session.playbackSequence) { segment in
-                            if let image = try? imageStore.load(segment.imagePath) {
+                        ForEach(session.playbackSequence) { step in
+                            if let image = try? imageStore.load(step.segment.imagePath) {
                                 SegmentView(
-                                    segment: segment,
+                                    segment: step.segment,
                                     image: image,
                                     tool: session.currentTool
                                 )
