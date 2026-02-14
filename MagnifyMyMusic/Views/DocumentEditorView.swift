@@ -6,15 +6,13 @@
 //
 
 import SwiftUI
-import SwiftData
 import PhotosUI
 
 struct DocumentEditorView: View {
     @Bindable var document: SheetMusicDocument
+    @Environment(DocumentStore.self) var store
     @State private var selectedImageIndex = 0
     @State private var selectedPhotos: [PhotosPickerItem] = []
-    
-    private let imageStore = ImageStore()
     
     var body: some View {
         VStack {
@@ -63,6 +61,9 @@ struct DocumentEditorView: View {
                 await loadImages(from: newValue)
             }
         }
+        .onDisappear {
+            try? store.save(document)
+        }
     }
     
     private func loadImages(from items: [PhotosPickerItem]) async {
@@ -72,27 +73,23 @@ struct DocumentEditorView: View {
                 continue
             }
             
-            // Save image and add to document
             let currentIndex = document.imagePaths.count
-            if let filename = try? imageStore.save(uiImage, documentName: document.name, index: currentIndex) {
+            if let filename = try? store.saveImage(uiImage, to: document.id, index: currentIndex) {
                 document.imagePaths.append(filename)
-                // Switch to the newly added image
                 selectedImageIndex = document.imagePaths.count - 1
             }
         }
         
-        // Clear selection
         selectedPhotos = []
     }
 }
 
 #Preview {
-    let container = PreviewHelper.createPreviewContainer()
-    let document = PreviewHelper.createSampleDocument(in: container)
+    let store = DocumentStore()
+    let doc = SheetMusicDocument(name: "Preview Doc")
     
     return NavigationStack {
-        DocumentEditorView(document: document)
+        DocumentEditorView(document: doc)
     }
-    .modelContainer(container)
+    .environment(store)
 }
-

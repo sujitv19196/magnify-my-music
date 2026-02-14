@@ -7,17 +7,14 @@
 
 import SwiftUI
 import PhotosUI
-import SwiftData
 
 struct CreateDocumentView: View {
-    @Environment(\.modelContext) private var modelContext
+    @Environment(DocumentStore.self) var store
     @Environment(\.dismiss) private var dismiss
     
     @State private var documentName = ""
     @State private var selectedItems: [PhotosPickerItem] = []
     @State private var selectedImages: [UIImage] = []
-    
-    private let imageStore = ImageStore()
     
     var body: some View {
         NavigationStack {
@@ -71,12 +68,16 @@ struct CreateDocumentView: View {
     private func createDocument() {
         let doc = SheetMusicDocument(name: documentName)
         
+        // Save the bundle first so the images/ directory exists
+        try? store.save(doc)
+        
+        // Save images into the bundle
         doc.imagePaths = selectedImages.enumerated().compactMap { (index, image) in
-            try? imageStore.save(image, documentName: documentName, index: index)
+            try? store.saveImage(image, to: doc.id, index: index)
         }
         
-        modelContext.insert(doc)
+        // Save again with updated imagePaths
+        try? store.save(doc)
         dismiss()
     }
 }
-

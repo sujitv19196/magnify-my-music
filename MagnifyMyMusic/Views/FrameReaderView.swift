@@ -7,11 +7,11 @@
 
 import SwiftUI
 import PencilKit
-import SwiftData
 
 struct SegmentReaderView: View {
     @Bindable var document: SheetMusicDocument
     @StateObject private var session: ReadingSession
+    @Environment(DocumentStore.self) var store
     @State private var showToolPicker = false
     
     // Zoom state managed by UIScrollView
@@ -19,8 +19,6 @@ struct SegmentReaderView: View {
     
     // Segment sizing - leave room for toolbar
     private let segmentHeightRatio: CGFloat = 0.85
-    
-    private let imageStore = ImageStore()
     
     init(document: SheetMusicDocument) {
         self._document = Bindable(wrappedValue: document)
@@ -57,7 +55,7 @@ struct SegmentReaderView: View {
                 ZoomableScrollView(zoomScale: $zoomScale) {
                     HStack(spacing: 0) {
                         ForEach(session.playbackSequence) { step in
-                            if let image = try? imageStore.load(step.segment.imagePath) {
+                            if let image = try? store.loadImage(step.segment.imagePath, from: document.id) {
                                 SegmentView(
                                     segment: step.segment,
                                     image: image,
@@ -81,15 +79,18 @@ struct SegmentReaderView: View {
             session.advanceByPedal()
             return .handled
         }
+        .onDisappear {
+            try? store.save(document)
+        }
     }
 }
 
 #Preview {
-    let container = PreviewHelper.createPreviewContainer()
-    let document = PreviewHelper.createSampleDocument(in: container)
+    let store = DocumentStore()
+    let doc = SheetMusicDocument(name: "Preview Doc")
     
     return NavigationStack {
-        SegmentReaderView(document: document)
+        SegmentReaderView(document: doc)
     }
-    .modelContainer(container)
+    .environment(store)
 }

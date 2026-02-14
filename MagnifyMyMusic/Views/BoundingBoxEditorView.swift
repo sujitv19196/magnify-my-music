@@ -11,14 +11,13 @@ struct BoundingBoxEditorView: View {
     @Bindable var document: SheetMusicDocument
     let imagePath: String
     
+    @Environment(DocumentStore.self) var store
     @State private var currentBox: CGRect?
     @State private var dragStart: CGPoint = .zero
     
-    private let imageStore = ImageStore()
-    
     var body: some View {
         GeometryReader { geometry in
-            if let image = try? imageStore.load(imagePath) {
+            if let image = try? store.loadImage(imagePath, from: document.id) {
                 let imageSegment = calculateImageSegment(containerSize: geometry.size, imageSize: image.size)
                 
                 ZStack {
@@ -125,6 +124,9 @@ struct BoundingBoxEditorView: View {
                 )
             }
         }
+        .onDisappear {
+            try? store.save(document)
+        }
     }
     
     private func calculateImageSegment(containerSize: CGSize, imageSize: CGSize) -> CGRect {
@@ -180,4 +182,3 @@ struct BoundingBoxEditorView: View {
         }
     }
 }
-

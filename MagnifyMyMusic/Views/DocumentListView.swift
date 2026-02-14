@@ -6,35 +6,20 @@
 //
 
 import SwiftUI
-import SwiftData
 
 struct DocumentListView: View {
-    @Query(sort: \SheetMusicDocument.createdAt, order: .reverse) 
-    var documents: [SheetMusicDocument]
-    
-    @Environment(\.modelContext) private var modelContext
+    @Environment(DocumentStore.self) var store
     @State private var showingCreateSheet = false
-    
-    private let imageStore = ImageStore()
     
     var body: some View {
         NavigationStack {
             List {
-                ForEach(documents) { doc in
+                ForEach(store.documentList) { manifest in
                     NavigationLink {
-                        if doc.segments.isEmpty {
-                            DocumentEditorView(document: doc)
-                        } else {
-                            SegmentReaderView(document: doc)
-                        }
+                        DocumentLoaderView(documentId: manifest.id)
                     } label: {
-                        VStack(alignment: .leading) {
-                            Text(doc.name)
-                                .font(.headline)
-                            Text("\(doc.segments.count) segments")
-                                .font(.caption)
-                                .foregroundColor(.secondary)
-                        }
+                        Text(manifest.name)
+                            .font(.headline)
                     }
                 }
                 .onDelete(perform: deleteDocuments)
@@ -57,18 +42,48 @@ struct DocumentListView: View {
     
     private func deleteDocuments(at offsets: IndexSet) {
         for index in offsets {
-            let doc = documents[index]
-            try? imageStore.deleteAll(forDocumentName: doc.name)
-            modelContext.delete(doc)
+            let manifest = store.documentList[index]
+            try? store.delete(id: manifest.id)
+        }
+    }
+}
+
+/// Loads the full document on appear and routes to editor or reader.
+private struct DocumentLoaderView: View {
+    let documentId: UUID
+    @Environment(DocumentStore.self) var store
+    @State private var document: SheetMusicDocument?
+    @State private var loadFailed = false
+    
+    var body: some View {
+        Group {
+            if let document {
+                if document.segments.isEmpty {
+                    DocumentEditorView(document: document)
+                } else {
+                    SegmentReaderView(document: document)
+                }
+            } else if loadFailed {
+                ContentUnavailableView(
+                    "Failed to Load",
+                    systemImage: "exclamationmark.triangle",
+                    description: Text("Could not read this document.")
+                )
+            } else {
+                ProgressView()
+            }
+        }
+        .task {
+            do {
+                document = try store.loadDocument(id: documentId)
+            } catch {
+                loadFailed = true
+            }
         }
     }
 }
 
 #Preview {
-    let container = PreviewHelper.createPreviewContainer()
-    let _ = PreviewHelper.createSampleDocument(in: container)
-    
-    return DocumentListView()
-        .modelContainer(container)
+    DocumentListView()
+        .environment(DocumentStore())
 }
-

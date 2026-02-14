@@ -5,34 +5,42 @@
 //  Created by Sujit Varadhan on 2/7/26.
 //  
 
-import SwiftData
 import Foundation
 
-@Model
-class NavigationMarker {
-    @Attribute(.unique) var id: UUID
-
-    /// Stored as JSON-encoded Data to work around SwiftData not supporting
-    /// arrays inside enum associated values (e.g. `volta(numbers: [Int])`).
-    private var typeData: Data
+@Observable
+class NavigationMarker: Identifiable, Codable {
+    var id: UUID
+    
+    /// The type of navigation marker (repeat, volta, segno, coda, etc.)
+    var type: NavigationMarkerType
 
     /// 0.0-1.0 normalized position within the segment's bounding box
     var xPosition: Double
 
-    var type: NavigationMarkerType {
-        get {
-            (try? JSONDecoder().decode(NavigationMarkerType.self, from: typeData))
-                ?? .repeatForward
-        }
-        set {
-            typeData = (try? JSONEncoder().encode(newValue)) ?? Data()
-        }
-    }
-
     init(type: NavigationMarkerType, xPosition: Double) {
         self.id = UUID()
-        self.typeData = (try? JSONEncoder().encode(type)) ?? Data()
+        self.type = type
         self.xPosition = xPosition
+    }
+    
+    // MARK: - Codable 
+    
+    enum CodingKeys: String, CodingKey {
+        case id, type, xPosition
+    }
+    
+    required init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        id = try container.decode(UUID.self, forKey: .id)
+        type = try container.decode(NavigationMarkerType.self, forKey: .type)
+        xPosition = try container.decode(Double.self, forKey: .xPosition)
+    }
+    
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(id, forKey: .id)
+        try container.encode(type, forKey: .type)
+        try container.encode(xPosition, forKey: .xPosition)
     }
 }
 

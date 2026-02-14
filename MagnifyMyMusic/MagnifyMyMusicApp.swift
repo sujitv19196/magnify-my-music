@@ -6,14 +6,15 @@
 //
 
 import SwiftUI
-import SwiftData
 
 @main
 struct MagnifyMyMusicApp: App {
+    @State private var documentStore = DocumentStore()
+    
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            DocumentListView()
         }
-        .modelContainer(for: [SheetMusicDocument.self, Segment.self, NavigationMarker.self])
+        .environment(documentStore)
     }
 }
