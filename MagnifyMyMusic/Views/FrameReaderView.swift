@@ -86,10 +86,10 @@ struct SegmentReaderView: View {
 }
 
 #Preview {
-    let store = DocumentStore()
-    let doc = SheetMusicDocument(name: "Preview Doc")
+    let store = PreviewHelper.createPreviewStore()
+    let doc = PreviewHelper.createSampleDocument()
     
-    return NavigationStack {
+    return NavigationStack {    
         SegmentReaderView(document: doc)
     }
     .environment(store)

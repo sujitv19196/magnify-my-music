@@ -85,5 +85,5 @@ private struct DocumentLoaderView: View {
 
 #Preview {
     DocumentListView()
-        .environment(DocumentStore())
+        .environment(PreviewHelper.createPreviewStore())
 }

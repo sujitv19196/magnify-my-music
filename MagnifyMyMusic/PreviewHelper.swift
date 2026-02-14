@@ -10,12 +10,15 @@ import SwiftUI
 #if DEBUG
 @MainActor
 struct PreviewHelper {
+    /// Fixed UUID so preview data always overwrites the same bundle on disk.
+    private static let sampleDocId = UUID(uuidString: "00000000-0000-0000-0000-000000000001")!
+    
     static func createSampleDocument() -> SheetMusicDocument {
         let doc = SheetMusicDocument(name: "Moanin")
+        doc.id = sampleDocId
         
-        // In previews we don't have real images on disk, so use placeholder paths.
-        // Views that try to load these will gracefully fail.
-        doc.imagePaths = ["page_0.jpg", "page_1.jpg"]
+        // Placeholder filenames — actual images are created by createPreviewStore()
+        doc.imagePaths = ["preview_page_0.jpg", "preview_page_1.jpg"]
         
         // Add sample segments aligned with actual staff systems
         let segment1 = Segment(
@@ -69,10 +72,27 @@ struct PreviewHelper {
         return doc
     }
     
+    /// Creates a DocumentStore with sample data saved to disk (including placeholder images).
+    /// Uses a fixed document UUID so previews always overwrite the same bundle.
     static func createPreviewStore() -> DocumentStore {
-        // Returns a store that scans the default directory.
-        // For in-memory previews, the directory will be empty — that's fine.
-        return DocumentStore()
+        let store = DocumentStore()
+        let doc = createSampleDocument()
+        
+        // Save document to disk so loadDocument(id:) works
+        try? store.save(doc)
+        
+        // Write the asset catalog images into the bundle so loadImage() works
+        let assetNames = ["TestSheetMusic1", "TestSheetMusic2"]
+        let imagesDir = store.bundleURL(for: doc.id).appendingPathComponent("images")
+        for (filename, assetName) in zip(doc.imagePaths, assetNames) {
+            let fileURL = imagesDir.appendingPathComponent(filename)
+            if !FileManager.default.fileExists(atPath: fileURL.path),
+               let image = UIImage(named: assetName) {
+                try? image.jpegData(compressionQuality: 0.9)?.write(to: fileURL)
+            }
+        }
+        
+        return store
     }
 }
 #endif
