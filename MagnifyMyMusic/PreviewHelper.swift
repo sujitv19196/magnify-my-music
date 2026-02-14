@@ -20,32 +20,27 @@ struct PreviewHelper {
         // Add sample segments aligned with actual staff systems
         let segment1 = Segment(
             imagePath: doc.imagePaths[0],
-            boundingBox: CGRect(x: 0.0, y: 0.14, width: 1.0, height: 0.08),
-            orderIndex: 0
+            boundingBox: CGRect(x: 0.0, y: 0.14, width: 1.0, height: 0.08)
         )
         
         let segment2 = Segment(
             imagePath: doc.imagePaths[0],
-            boundingBox: CGRect(x: 0.0, y: 0.22, width: 1.0, height: 0.08),
-            orderIndex: 1
+            boundingBox: CGRect(x: 0.0, y: 0.22, width: 1.0, height: 0.08)
         )
         
         let segment3 = Segment(
             imagePath: doc.imagePaths[0],
-            boundingBox: CGRect(x: 0.0, y: 0.30, width: 1.0, height: 0.08),
-            orderIndex: 2
+            boundingBox: CGRect(x: 0.0, y: 0.30, width: 1.0, height: 0.08)
         )
         
         let segment4 = Segment(
             imagePath: doc.imagePaths[0],
-            boundingBox: CGRect(x: 0.0, y: 0.37, width: 1.0, height: 0.08),
-            orderIndex: 3
+            boundingBox: CGRect(x: 0.0, y: 0.37, width: 1.0, height: 0.08)
         )
         
         let segment5 = Segment(
             imagePath: doc.imagePaths[0],
-            boundingBox: CGRect(x: 0.0, y: 0.45, width: 1.0, height: 0.08),
-            orderIndex: 4
+            boundingBox: CGRect(x: 0.0, y: 0.45, width: 1.0, height: 0.08)
         )
         
         // -- Add navigation markers --

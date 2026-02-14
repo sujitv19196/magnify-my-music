@@ -28,7 +28,7 @@ private struct MarkerStreamEntry {
 
 enum NavigationGraphWalker {
     static func buildPlaybackSequence(from inputSegments: [Segment]) -> [PlaybackStep] {
-        let segments = inputSegments.sorted { $0.orderIndex < $1.orderIndex }
+        let segments = inputSegments  // Caller should provide pre-sorted segments (page number, then top-to-bottom, then left-to-right)
         guard !segments.isEmpty else { return [] }
 
         var markerStream: [MarkerStreamEntry] = []

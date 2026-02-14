@@ -72,8 +72,8 @@ struct CreateDocumentView: View {
         try? store.save(doc)
         
         // Save images into the bundle
-        doc.imagePaths = selectedImages.enumerated().compactMap { (index, image) in
-            try? store.saveImage(image, to: doc.id, index: index)
+        doc.imagePaths = selectedImages.compactMap { image in
+            try? store.saveImage(image, to: doc.id)
         }
         
         // Save again with updated imagePaths

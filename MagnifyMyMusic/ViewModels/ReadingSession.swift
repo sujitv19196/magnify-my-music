@@ -38,7 +38,8 @@ class ReadingSession: ObservableObject {
     
     func buildPlaybackSequence() {
         playbackSequence = NavigationGraphWalker.buildPlaybackSequence(
-            from: document.segments
+            // Sorts by page number, then top-to-bottom, then left-to-right
+            from: document.sortedSegments
         )
     }
 }

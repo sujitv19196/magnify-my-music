@@ -158,15 +158,14 @@ class DocumentStore {
         documentList.removeAll { $0.id == id }
     }
         
-    /// Saves a JPEG image into the document's bundle.
-    /// - Returns: The relative filename (e.g. "page_0.jpg") to store in `imagePaths`.
-    // TODO: kill ImageStore, consider uuid as filename, consider use png instead of jpg, move page number to data model
+    /// Saves a JPEG image into the document's bundle with a UUID-based filename.
+    /// - Returns: The filename (e.g. "A3F2...jpg") to store in `imagePaths`.
     @discardableResult
-    func saveImage(_ image: UIImage, to documentId: UUID, index: Int) throws -> String {
+    func saveImage(_ image: UIImage, to documentId: UUID) throws -> String {
         let images = imagesURL(for: documentId)
         try fileManager.createDirectory(at: images, withIntermediateDirectories: true)
         
-        let filename = "page_\(index).jpg"
+        let filename = "\(UUID().uuidString).jpg"
         let url = images.appendingPathComponent(filename)
         
         guard let data = image.jpegData(compressionQuality: 0.9) else {

@@ -73,8 +73,7 @@ struct DocumentEditorView: View {
                 continue
             }
             
-            let currentIndex = document.imagePaths.count
-            if let filename = try? store.saveImage(uiImage, to: document.id, index: currentIndex) {
+            if let filename = try? store.saveImage(uiImage, to: document.id) {
                 document.imagePaths.append(filename)
                 selectedImageIndex = document.imagePaths.count - 1
             }

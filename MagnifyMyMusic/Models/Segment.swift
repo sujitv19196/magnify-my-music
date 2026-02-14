@@ -13,11 +13,10 @@ class Segment: Identifiable, Codable {
     var id: UUID
     /// Direct reference to image file
     var imagePath: String  
-
-    /// Explicit ordering for playback sequence
-    var orderIndex: Int  
     
+    /// Top-left X coordinate (normalized 0–1 relative to page image width)
     var boundingBoxX: Double
+    /// Top-left Y coordinate (normalized 0–1 relative to page image height)
     var boundingBoxY: Double
     var boundingBoxWidth: Double
     var boundingBoxHeight: Double
@@ -44,10 +43,9 @@ class Segment: Identifiable, Codable {
         }
     }
     
-    init(imagePath: String, boundingBox: CGRect, orderIndex: Int) {
+    init(imagePath: String, boundingBox: CGRect) {
         self.id = UUID()
         self.imagePath = imagePath
-        self.orderIndex = orderIndex
         self.boundingBoxX = boundingBox.origin.x
         self.boundingBoxY = boundingBox.origin.y
         self.boundingBoxWidth = boundingBox.width
@@ -59,7 +57,7 @@ class Segment: Identifiable, Codable {
     // MARK: - Codable 
     
     enum CodingKeys: String, CodingKey {
-        case id, imagePath, orderIndex
+        case id, imagePath
         case boundingBoxX, boundingBoxY, boundingBoxWidth, boundingBoxHeight
         case markers, label, drawingData
     }
@@ -68,7 +66,6 @@ class Segment: Identifiable, Codable {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         id = try container.decode(UUID.self, forKey: .id)
         imagePath = try container.decode(String.self, forKey: .imagePath)
-        orderIndex = try container.decode(Int.self, forKey: .orderIndex)
         boundingBoxX = try container.decode(Double.self, forKey: .boundingBoxX)
         boundingBoxY = try container.decode(Double.self, forKey: .boundingBoxY)
         boundingBoxWidth = try container.decode(Double.self, forKey: .boundingBoxWidth)
@@ -82,7 +79,6 @@ class Segment: Identifiable, Codable {
         var container = encoder.container(keyedBy: CodingKeys.self)
         try container.encode(id, forKey: .id)
         try container.encode(imagePath, forKey: .imagePath)
-        try container.encode(orderIndex, forKey: .orderIndex)
         try container.encode(boundingBoxX, forKey: .boundingBoxX)
         try container.encode(boundingBoxY, forKey: .boundingBoxY)
         try container.encode(boundingBoxWidth, forKey: .boundingBoxWidth)

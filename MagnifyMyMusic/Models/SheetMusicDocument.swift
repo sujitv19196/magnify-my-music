@@ -58,3 +58,30 @@ class SheetMusicDocument: Identifiable, Codable {
         try container.encode(modifiedAt, forKey: .modifiedAt)
     }
 }
+
+extension SheetMusicDocument {
+    /// Infers the page number for a segment from its position in `imagePaths`.
+    /// Returns nil if the segment's imagePath is not found (orphaned segment).
+    func pageNumber(for segment: Segment) -> Int? {
+        imagePaths.firstIndex(of: segment.imagePath)
+    }
+
+    /// Segments in playback order, excluding any with unresolved imagePaths.
+    /// Sorted by: page number, then top-to-bottom (Y), then left-to-right (X).
+    var sortedSegments: [Segment] {
+        segments
+            .filter { pageNumber(for: $0) != nil }
+            .sorted {
+                let p0 = pageNumber(for: $0)!
+                let p1 = pageNumber(for: $1)!
+                if p0 != p1 { return p0 < p1 }
+                if $0.boundingBoxY != $1.boundingBoxY { return $0.boundingBoxY < $1.boundingBoxY }
+                return $0.boundingBoxX < $1.boundingBoxX
+            }
+    }
+
+    /// Segments whose imagePath doesn't match any entry in imagePaths.
+    var orphanedSegments: [Segment] {
+        segments.filter { pageNumber(for: $0) == nil }
+    }
+}
