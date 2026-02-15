@@ -13,33 +13,33 @@ struct SegmentReaderView: View {
     @StateObject private var session: ReadingSession
     @Environment(DocumentStore.self) var store
     @State private var showToolPicker = false
-    
+
     // Zoom state managed by UIScrollView
     @State private var zoomScale: CGFloat = 1.0
-    
+
     // Segment sizing - leave room for toolbar
     private let segmentHeightRatio: CGFloat = 0.85
-    
+
     init(document: SheetMusicDocument) {
         self._document = Bindable(wrappedValue: document)
         self._session = StateObject(wrappedValue: ReadingSession(document: document))
     }
-    
+
     var body: some View {
         GeometryReader { geometry in
             VStack(spacing: 0) {
                 // Minimal toolbar
                 HStack {
                     NavigationLink {
-                        DocumentEditorView(document: document)
+                        PageSelectView(document: document)
                     } label: {
                         Image(systemName: "square.and.pencil")
                             .font(.title2)
                     }
                     .padding(.horizontal)
-                    
+
                     Spacer()
-                    
+
                     Button {
                         showToolPicker.toggle()
                     } label: {
@@ -50,7 +50,7 @@ struct SegmentReaderView: View {
                 }
                 .padding(.vertical, 4)
                 .background(Color(.systemGray6))
-                
+
                 // Scrollable, zoomable content using UIScrollView
                 ZoomableScrollView(zoomScale: $zoomScale) {
                     HStack(spacing: 0) {
@@ -88,8 +88,8 @@ struct SegmentReaderView: View {
 #Preview {
     let store = PreviewHelper.createPreviewStore()
     let doc = PreviewHelper.createSampleDocument()
-    
-    return NavigationStack {    
+
+    return NavigationStack {
         SegmentReaderView(document: doc)
     }
     .environment(store)

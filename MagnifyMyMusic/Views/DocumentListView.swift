@@ -10,7 +10,7 @@ import SwiftUI
 struct DocumentListView: View {
     @Environment(DocumentStore.self) var store
     @State private var showingCreateSheet = false
-    
+
     var body: some View {
         NavigationStack {
             List {
@@ -39,7 +39,7 @@ struct DocumentListView: View {
             }
         }
     }
-    
+
     private func deleteDocuments(at offsets: IndexSet) {
         for index in offsets {
             let manifest = store.documentList[index]
@@ -54,15 +54,11 @@ private struct DocumentLoaderView: View {
     @Environment(DocumentStore.self) var store
     @State private var document: SheetMusicDocument?
     @State private var loadFailed = false
-    
+
     var body: some View {
         Group {
             if let document {
-                if document.segments.isEmpty {
-                    DocumentEditorView(document: document)
-                } else {
-                    SegmentReaderView(document: document)
-                }
+                PageSelectView(document: document)
             } else if loadFailed {
                 ContentUnavailableView(
                     "Failed to Load",
