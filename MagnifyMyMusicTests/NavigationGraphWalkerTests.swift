@@ -292,4 +292,22 @@ final class NavigationGraphWalkerTests: XCTestCase {
         let result = NavigationGraphWalker.buildPlaybackSequence(from: segments)
         XCTAssertEqual(labels(result), ["A", "B", "C", "D", "E", "F", "A", "B", "D", "E", "F"])
     }
+
+    /// D.C. al Coda — coda is in a new segment never played on first pass.
+    /// Layout: [A, B ToCoda, C, D D.C., E Coda, F]
+    ///
+    /// First pass:  A, B, C, D       (ToCoda ignored; E, F never played)
+    /// After D.C.:  A, B → jump to Coda → E, F
+    func testDaCapo_alCoda_codaInNewSegment() {
+        let segments = [
+            seg("A"),
+            seg("B", markers: [(.tocoda(), 1.0)]),
+            seg("C"),
+            seg("D", markers: [(.dacapo, 1.0)]),
+            seg("E", markers: [(.coda(), 0.0)]),
+            seg("F")
+        ]
+        let result = NavigationGraphWalker.buildPlaybackSequence(from: segments)
+        XCTAssertEqual(labels(result), ["A", "B", "C", "D", "A", "B", "E", "F"])
+    }
 }

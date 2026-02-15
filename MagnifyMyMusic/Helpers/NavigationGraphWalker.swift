@@ -41,11 +41,12 @@ enum NavigationGraphWalker {
         var result: [PlaybackStep] = []
         var cursor = 0                       // index into markerStream
         var repeatJumpBack: Int? = nil       // stream index of the repeatForward
-        var repeatTimesLeft: Int = 0         // jumps remaining for current repeat
+        var repeatTimesLeft: Int = -1       // -1 = uninitialized; 0+ = jumps remaining for current repeat
         var currentVoltaPass: Int = 1        // 1-based pass through volta section
         var isReplayingAfterJump: Bool = false // true after D.S. or D.C.
         var lastEmittedSegIndex: Int = -1    // track which segment we last emitted
         var lastEmittedEndX: Double = 0.0    // where we left off in that segment
+        var endedAtFine: Bool = false        // true when we break at Fine (replay ends; skip final emit)
 
         let maxIterations = markerStream.count * 20
         var iterations = 0
@@ -71,8 +72,8 @@ enum NavigationGraphWalker {
                     cursor += 1
                 case .repeatBackward(let times):
                     if isReplayingAfterJump { cursor += 1; break }
-                    if repeatTimesLeft == 0 {
-                        // First time hitting this backward marker
+                    if repeatTimesLeft == -1 {
+                        // First time hitting this backward marker — initialize repeat count
                         repeatTimesLeft = times
                     }
                     if repeatTimesLeft > 0, let jumpBack = repeatJumpBack {
@@ -81,7 +82,7 @@ enum NavigationGraphWalker {
                     } else {
                         // Done repeating — clean up and move forward
                         repeatJumpBack = nil
-                        repeatTimesLeft = 0
+                        repeatTimesLeft = -1
                         cursor += 1
                     }
                 case .volta(let numbers):
@@ -117,45 +118,46 @@ enum NavigationGraphWalker {
 
                 // Jump commands
                 case .dacapo:
-                    // Jump to beginning of piece, start replay
-                    isReplayingAfterJump = true
-                    jumpTo(0, cursor: &cursor, lastEmitted: &lastEmittedSegIndex, lastEmittedEndX: &lastEmittedEndX, in: markerStream)
+                    // Jump to beginning of piece, start replay (only once; if already replaying, advance past)
+                    if isReplayingAfterJump {
+                        cursor += 1
+                    } else {
+                        isReplayingAfterJump = true
+                        jumpTo(0, cursor: &cursor, lastEmitted: &lastEmittedSegIndex, lastEmittedEndX: &lastEmittedEndX, in: markerStream, fromPieceStart: true)
+                    }
                 case .dalsegno(let label):
-                    // Jump back to matching segno
-                    if let target = findStreamIndex(in: markerStream, matching: { if case .segno(let l) = $0 { return l == label }; return false }) {
+                    // Jump back to matching segno (only once; if already replaying, advance past)
+                    if !isReplayingAfterJump, let target = findStreamIndex(in: markerStream, matching: { if case .segno(let l) = $0 { return l == label }; return false }) {
                         isReplayingAfterJump = true
                         jumpTo(target, cursor: &cursor, lastEmitted: &lastEmittedSegIndex, lastEmittedEndX: &lastEmittedEndX, in: markerStream)
                     } else {
+                        // Already replaying or no matching segno — advance past
                         cursor += 1
                     }
                 case .tocoda(let label):
-                    if isReplayingAfterJump {
-                        // Jump forward to matching coda
-                        if let target = findStreamIndex(in: markerStream, matching: { if case .coda(let l) = $0 { return l == label }; return false }) {
-                            jumpTo(target, cursor: &cursor, lastEmitted: &lastEmittedSegIndex, lastEmittedEndX: &lastEmittedEndX, in: markerStream)
-                        } else {
-                            cursor += 1
-                        }
+                    if isReplayingAfterJump,let target = findStreamIndex(in: markerStream, matching: { if case .coda(let l) = $0 { return l == label }; return false }) {
+                        jumpTo(target, cursor: &cursor, lastEmitted: &lastEmittedSegIndex, lastEmittedEndX: &lastEmittedEndX, in: markerStream)
                     } else {
-                        // Not replaying — ignore tocoda
+                        // Not replaying or no matching coda — advance past
                         cursor += 1
                     }
                 case .fine:
                     if isReplayingAfterJump {
-                        // End of piece during replay
+                        endedAtFine = true
                         break walkLoop
                     }
                     cursor += 1
             }
         }
 
-        // Emit any remaining segments after the last marker
-        // Also emits if no markers were found
-        emitSegmentRange(
-            from: lastEmittedSegIndex, startX: lastEmittedEndX,
-            through: segments.count - 1, endX: 1.0,
-            segments: segments, into: &result
-        )
+        // Emit any remaining segments after the last marker (unless we ended at Fine)
+        if !endedAtFine {
+            emitSegmentRange(
+                from: lastEmittedSegIndex, startX: lastEmittedEndX,
+                through: segments.count - 1, endX: 1.0,
+                segments: segments, into: &result
+            )
+        }
 
         return result
     }
@@ -198,20 +200,32 @@ enum NavigationGraphWalker {
         }
     }
 
-    /// Moves cursor to `target`. For forward jumps, also updates emission position to skip content.
-    /// For backward jumps, emitSegmentRange's guard handles it naturally.
+    /// Moves cursor to `target`. Updates emission position so the next emitSegmentRange emits the right content.
+    /// Forward jumps: skip already-played content (set position to target marker).
+    /// Backward jumps: set position so we re-emit. If `fromPieceStart` is true (D.C.), emit from start of piece; otherwise from the target marker's position (repeat/volta/D.S.).
     private static func jumpTo(
         _ target: Int,
         cursor: inout Int,
         lastEmitted: inout Int,
         lastEmittedEndX: inout Double,
-        in stream: [MarkerStreamEntry]
+        in stream: [MarkerStreamEntry],
+        fromPieceStart: Bool = false
     ) {
         let isForward = target > cursor
         cursor = target
-        if isForward, target < stream.count {
+        guard target >= 0, target < stream.count else { return }
+        if isForward {
             lastEmitted = stream[target].segmentIndex
             lastEmittedEndX = stream[target].marker.xPosition
+        } else {
+            if fromPieceStart {
+                lastEmitted = -1
+                lastEmittedEndX = 0.0
+            } else {
+                let entry = stream[target]
+                lastEmitted = entry.segmentIndex
+                lastEmittedEndX = entry.marker.xPosition
+            }
         }
     }
 

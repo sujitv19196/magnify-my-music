@@ -21,22 +21,9 @@
 		8FBEC2432EB6D33500814EF4 /* MagnifyMyMusic.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MagnifyMyMusic.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
-/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
-		8F766E122F412E90006F79FF /* Exceptions for "MagnifyMyMusicTests" folder in "MagnifyMyMusicTests" target */ = {
-			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
-			membershipExceptions = (
-				NavigationGraphWalkerTests.swift,
-			);
-			target = 8F766E082F412E8C006F79FF /* MagnifyMyMusicTests */;
-		};
-/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
-
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		8F766E0A2F412E8C006F79FF /* MagnifyMyMusicTests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			exceptions = (
-				8F766E122F412E90006F79FF /* Exceptions for "MagnifyMyMusicTests" folder in "MagnifyMyMusicTests" target */,
-			);
 			path = MagnifyMyMusicTests;
 			sourceTree = "<group>";
 		};

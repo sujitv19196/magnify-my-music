@@ -53,7 +53,9 @@ class Segment: Identifiable, Codable {
         self.drawingData = nil
         self.markers = []
     }
-    
+
+    deinit { }
+
     // MARK: - Codable 
     
     enum CodingKeys: String, CodingKey {

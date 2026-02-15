@@ -22,7 +22,9 @@ class NavigationMarker: Identifiable, Codable {
         self.type = type
         self.xPosition = xPosition
     }
-    
+
+    deinit { }
+
     // MARK: - Codable 
     
     enum CodingKeys: String, CodingKey {
@@ -94,6 +96,6 @@ enum NavigationMarkerType: Codable, Sendable {
     
     // **V2:** Add case variants for:
     // - timeOnly modifier (which pass triggers a jump) — rare in printed music
-    // - afterJump (whether repeats honor after D.S./D.C.) — pick sensible default for now: skip repeats after jump
+    // - afterJump (whether repeats honor after D.S./D.C.) — pick sensible default for now: skip repeats after jump. Consider move to document level
     // - forwardRepeatImplied — very rare edge case (minuet/trio forms)
 }
