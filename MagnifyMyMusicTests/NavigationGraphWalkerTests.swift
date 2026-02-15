@@ -1,13 +1,5 @@
 //
 //  NavigationGraphWalkerTests.swift
-//  MagnifyMyMusic
-//
-//  Created by Sujit Varadhan on 2/14/26.
-//
-
-
-//
-//  NavigationGraphWalkerTests.swift
 //  MagnifyMyMusicTests
 //
 //  Created by Sujit Varadhan on 2/14/26.
