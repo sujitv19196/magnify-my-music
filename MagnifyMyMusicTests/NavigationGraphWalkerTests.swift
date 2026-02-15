@@ -84,6 +84,47 @@ final class NavigationGraphWalkerTests: XCTestCase {
         XCTAssertEqual(labels(result), ["A", "B", "C", "D", "B", "C", "D"])
     }
 
+    // MARK: - Markers mid-segment (startX → marker, marker → endX)
+
+    /// Marker in the middle of a segment splits it into two steps.
+    /// Layout: [A, B with segno at 0.5]
+    /// Emit: A, B(0..0.5), B(0.5..1.0)
+    func testMarker_midSegment_splitsSegmentIntoTwoSteps() {
+        let segments = [
+            seg("A"),
+            seg("B", markers: [(.segno(), 0.5)])
+        ]
+        let result = NavigationGraphWalker.buildPlaybackSequence(from: segments)
+        XCTAssertEqual(labels(result), ["A", "B", "B"])
+        let bSteps = result.filter { $0.segment.label == "B" }
+        XCTAssertEqual(bSteps.count, 2)
+        XCTAssertEqual(bSteps[0].startX, 0.0)
+        XCTAssertEqual(bSteps[0].endX, 0.5)
+        XCTAssertEqual(bSteps[1].startX, 0.5)
+        XCTAssertEqual(bSteps[1].endX, 1.0)
+    }
+
+    /// End repeat in the middle of the last segment: emit start→marker, then after repeat done emit marker→end.
+    /// Layout: [A |:, B, C :| at 0.5]
+    /// First pass: A, B, C(0..0.5); repeat: A, B, C(0..0.5); then final emit C(0.5..1.0).
+    func testRepeat_endMarkerMidSegment_emitsStartToMarkerAndMarkerToEnd() {
+        let segments = [
+            seg("A", markers: [(.repeatForward, 0.0)]),
+            seg("B"),
+            seg("C", markers: [(.repeatBackward(times: 1), 0.5)])
+        ]
+        let result = NavigationGraphWalker.buildPlaybackSequence(from: segments)
+        XCTAssertEqual(labels(result), ["A", "B", "C", "A", "B", "C", "C"])
+        let cSteps = result.filter { $0.segment.label == "C" }
+        XCTAssertEqual(cSteps.count, 3)
+        XCTAssertEqual(cSteps[0].startX, 0.0)
+        XCTAssertEqual(cSteps[0].endX, 0.5)
+        XCTAssertEqual(cSteps[1].startX, 0.0)
+        XCTAssertEqual(cSteps[1].endX, 0.5)
+        XCTAssertEqual(cSteps[2].startX, 0.5)
+        XCTAssertEqual(cSteps[2].endX, 1.0)
+    }
+
     // MARK: - Volta (1st / 2nd Endings)
 
     /// First and second endings — no segments skipped.
