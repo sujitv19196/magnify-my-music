@@ -43,7 +43,7 @@ struct BoundingBoxEditorView: View {
                                         .foregroundColor(.red)
                                         .background(Circle().fill(Color.white))
                                 }
-                                .padding(.trailing, 10)
+                                .offset(x: 40)
                             }
                             .position(x: boxX + boxWidth / 2, y: boxY + boxHeight / 2)
                             .id(segment.id)
