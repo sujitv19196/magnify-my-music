@@ -29,7 +29,7 @@ private let markerTypeOptions: [MarkerTypeOption] = [
     MarkerTypeOption(label: "Fine", type: .fine),
 ]
 
-struct MarkerEditorView: View {
+struct MarkerSelectionView: View {
     @Bindable var document: SheetMusicDocument
     @Binding var selectedMarkerType: NavigationMarkerType?
     @Environment(\.dismiss) private var dismiss
