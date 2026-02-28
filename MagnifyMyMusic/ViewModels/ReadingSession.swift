@@ -7,19 +7,18 @@
 
 import SwiftUI
 import PencilKit
-internal import Combine
 
-@MainActor
-class ReadingSession: ObservableObject {
-    @Published var document: SheetMusicDocument
-    
+@Observable
+class ReadingSession {
+    var document: SheetMusicDocument
+
     // Drawing tool state
-    @Published var currentTool: PKInkingTool
-    
+    var currentTool: PKInkingTool
+
     // Reading/playback state
-    @Published var currentSegmentIndex: Int = 0
-    @Published var horizontalScrollOffset: CGFloat = 0.0
-    @Published private(set) var playbackSequence: [PlaybackStep] = []
+    var currentSegmentIndex: Int = 0
+    var horizontalScrollOffset: CGFloat = 0.0
+    private(set) var playbackSequence: [PlaybackStep] = []
     
     // User preferences stored in UserDefaults
     var pedalScrollDistance: CGFloat {

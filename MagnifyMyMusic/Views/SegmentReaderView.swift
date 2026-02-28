@@ -10,7 +10,7 @@ import PencilKit
 
 struct SegmentReaderView: View {
     @Bindable var document: SheetMusicDocument
-    @StateObject private var session: ReadingSession
+    @State private var session: ReadingSession
     @Environment(DocumentStore.self) var store
     @State private var showToolPicker = false
 
@@ -22,7 +22,7 @@ struct SegmentReaderView: View {
 
     init(document: SheetMusicDocument) {
         self._document = Bindable(wrappedValue: document)
-        self._session = StateObject(wrappedValue: ReadingSession(document: document))
+        self._session = State(wrappedValue: ReadingSession(document: document))
     }
 
     var body: some View {

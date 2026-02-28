@@ -1,5 +1,5 @@
 //
-//  MarkerEditorView.swift
+//  MarkerSelectionView.swift
 //  MagnifyMyMusic
 //
 //  Created by Sujit Varadhan on 2/15/26.
@@ -29,7 +29,7 @@ private let markerTypeOptions: [MarkerTypeOption] = [
     MarkerTypeOption(label: "Fine", type: .fine),
 ]
 
-struct MarkerSelectionView: View {
+struct MarkerTypePickerView: View {
     @Bindable var document: SheetMusicDocument
     @Binding var selectedMarkerType: NavigationMarkerType?
     @Environment(\.dismiss) private var dismiss

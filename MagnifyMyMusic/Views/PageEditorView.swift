@@ -63,7 +63,7 @@ struct PageEditorView: View {
             }
         }
         .sheet(isPresented: $showMarkerSheet) {
-            MarkerSelectionView(document: document, selectedMarkerType: $selectedMarkerType)
+            MarkerTypePickerView(document: document, selectedMarkerType: $selectedMarkerType)
         }
         .onDisappear {
             try? store.save(document)
