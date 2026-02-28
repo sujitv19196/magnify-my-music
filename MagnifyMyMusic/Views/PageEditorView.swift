@@ -13,6 +13,7 @@ struct PageEditorView: View {
 
     @State private var showMarkerSheet = false
     @State private var selectedMarkerType: NavigationMarkerType?
+    @State private var zoomScale: CGFloat = 1.0
 
     let selectedImageIndex: Int
 
@@ -20,22 +21,22 @@ struct PageEditorView: View {
         self._document = Bindable(wrappedValue: document)
         self.selectedImageIndex = selectedImageIndex
     }
-    
+
     var body: some View {
         ZStack(alignment: .bottom) {
-            VStack {
-                if !document.imagePaths.isEmpty, selectedImageIndex < document.imagePaths.count {
+            if !document.imagePaths.isEmpty, selectedImageIndex < document.imagePaths.count {
+                EditorScrollView(zoomScale: $zoomScale) {
                     BoundingBoxEditorView(
                         document: document,
                         imagePath: document.imagePaths[selectedImageIndex]
                     )
-                } else if document.imagePaths.isEmpty {
-                    ContentUnavailableView(
-                        "No Images",
-                        systemImage: "photo",
-                        description: Text("Add images to get started")
-                    )
                 }
+            } else if document.imagePaths.isEmpty {
+                ContentUnavailableView(
+                    "No Images",
+                    systemImage: "photo",
+                    description: Text("Add images to get started")
+                )
             }
 
             Button {
@@ -74,7 +75,7 @@ struct PageEditorView: View {
 #Preview {
     let store = PreviewHelper.createPreviewStore()
     let doc = PreviewHelper.createSampleDocument()
-    
+
     return NavigationStack {
         PageEditorView(document: doc)
     }

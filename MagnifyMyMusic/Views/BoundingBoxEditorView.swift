@@ -48,8 +48,6 @@ struct BoundingBoxEditorView: View {
                             .position(x: boxX + boxWidth / 2, y: boxY + boxHeight / 2)
                             .id(segment.id)
                     }
-                    .drawingGroup()  // Composite segments into single GPU layer for better performance
-                    
                     if let box = currentBox {
                         Rectangle()
                             .stroke(Color.green, lineWidth: 3)
