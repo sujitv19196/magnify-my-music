@@ -54,10 +54,13 @@ struct ZoomableScrollView<Content: View>: UIViewRepresentable {
     func updateUIView(_ scrollView: UIScrollView, context: Context) {
         // Update hosted content
         context.coordinator.hostingController?.rootView = content
-        
-        // Update zoom if changed externally
+
+        // Update zoom if changed externally, then re-center after layout completes
         if scrollView.zoomScale != zoomScale {
             scrollView.setZoomScale(zoomScale, animated: false)
+            DispatchQueue.main.async {
+                context.coordinator.centerContent(in: scrollView)
+            }
         }
     }
     
@@ -85,7 +88,7 @@ struct ZoomableScrollView<Content: View>: UIViewRepresentable {
             centerContent(in: scrollView)
         }
         
-        private func centerContent(in scrollView: UIScrollView) {
+        func centerContent(in scrollView: UIScrollView) {
             guard let contentView = hostingController?.view else { return }
             
             let contentWidth = contentView.frame.width * scrollView.zoomScale

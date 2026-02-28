@@ -25,6 +25,11 @@ class ReadingSession {
         get { UserDefaults.standard.object(forKey: "pedalScrollDistance") as? CGFloat ?? 200 }
         set { UserDefaults.standard.set(newValue, forKey: "pedalScrollDistance") }
     }
+
+    var zoomScale: CGFloat {
+        get { UserDefaults.standard.object(forKey: "zoomScale-\(document.id)") as? CGFloat ?? 1.0 }
+        set { UserDefaults.standard.set(newValue, forKey: "zoomScale-\(document.id)") }
+    }
     
     init(document: SheetMusicDocument) {
         self.document = document

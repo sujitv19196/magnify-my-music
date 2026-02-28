@@ -14,9 +14,6 @@ struct SegmentReaderView: View {
     @Environment(DocumentStore.self) var store
     @State private var showToolPicker = false
 
-    // Zoom state managed by UIScrollView
-    @State private var zoomScale: CGFloat = 1.0
-
     // Segment sizing - leave room for toolbar
     private let segmentHeightRatio: CGFloat = 0.85
 
@@ -52,7 +49,7 @@ struct SegmentReaderView: View {
                 .background(Color(.systemGray6))
 
                 // Scrollable, zoomable content using UIScrollView
-                ZoomableScrollView(zoomScale: $zoomScale) {
+                ZoomableScrollView(zoomScale: Bindable(session).zoomScale) {
                     HStack(spacing: 0) {
                         ForEach(session.playbackSequence) { step in
                             if let image = try? store.loadImage(step.segment.imagePath, from: document.id) {
@@ -68,7 +65,6 @@ struct SegmentReaderView: View {
                 }
                 .onAppear {
                     session.buildPlaybackSequence()
-                    zoomScale = 1.0  // Start at 1x
                 }
             }
         }
