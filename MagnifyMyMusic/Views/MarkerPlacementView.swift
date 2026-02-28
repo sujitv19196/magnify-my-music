@@ -55,7 +55,6 @@ struct MarkerPlacementView: View {
                 }
             }
         }
-        .allowsHitTesting(selectedMarkerType != nil)
     }
 
     // MARK: - Saved markers
@@ -71,32 +70,44 @@ struct MarkerPlacementView: View {
                     + (segment.boundingBoxY + segment.boundingBoxHeight / 2.0)
                     * imageFrame.height
 
-                savedMarkerBadge(text: marker.type.displayName,
+                savedMarkerBadge(marker: marker, segment: segment,
                                  at: CGPoint(x: screenX, y: screenY))
             }
         }
     }
 
     @ViewBuilder
-    private func savedMarkerBadge(text: String, at point: CGPoint) -> some View {
+    private func savedMarkerBadge(marker: NavigationMarker, segment: Segment, at point: CGPoint) -> some View {
         VStack(spacing: 0) {
-            Text(text)
-                .font(.callout.weight(.bold))
-                .foregroundStyle(.primary)
-                .padding(.horizontal, 10)
-                .padding(.vertical, 5)
-                .background(
-                    RoundedRectangle(cornerRadius: 8)
-                        .fill(Color.accentColor)
-                        .shadow(color: .secondary.opacity(0.5), radius: 3, y: 1)
-                )
+            HStack(spacing: 2) {
+                Text(marker.type.displayName)
+                    .font(.callout.weight(.bold))
+                    .foregroundStyle(.primary)
+                    .padding(.leading, 10)
+                    .padding(.vertical, 5)
+
+                Button {
+                    deleteMarker(marker, from: segment)
+                } label: {
+                    Image(systemName: "xmark.circle.fill")
+                        .font(.system(size: 18))
+                        .foregroundColor(.red)
+                        .background(Circle().fill(Color.white).padding(1))
+                }
+                .padding(.trailing, 6)
+            }
+            .background(
+                RoundedRectangle(cornerRadius: 8)
+                    .fill(Color.accentColor)
+                    .shadow(color: .secondary.opacity(0.5), radius: 3, y: 1)
+            )
+
             Circle()
                 .fill(Color.accentColor)
                 .frame(width: 22, height: 22)
                 .overlay(Circle().stroke(Color.secondary.opacity(0.3), lineWidth: 1.5))
         }
         .position(x: point.x, y: point.y - 28)
-        .allowsHitTesting(false)
     }
 
     // MARK: - Pending dot (being placed)
@@ -112,7 +123,6 @@ struct MarkerPlacementView: View {
         )
         let canSave = containingSegment(for: live, imageFrame: imageFrame) != nil
 
-        // Controls bar — positioned 56 pt above the dot centre
         HStack(spacing: 10) {
             Text(markerType.displayName)
                 .font(.subheadline.weight(.semibold))
@@ -141,8 +151,7 @@ struct MarkerPlacementView: View {
         }
         .position(x: live.x, y: live.y - 56)
 
-        // Draggable dot — positioned at `live` so the gesture coordinate space
-        // never shifts as the view moves.
+        // Draggable dot — positioned at `live` so the gesture coordinate space never shifts as the view moves.
         Circle()
             .fill(Color.accentColor)
             .frame(width: 34, height: 34)
@@ -169,6 +178,10 @@ struct MarkerPlacementView: View {
         return segmentsForCurrentImage.first {
             $0.boundingBox.contains(CGPoint(x: normX, y: normY))
         }
+    }
+
+    private func deleteMarker(_ marker: NavigationMarker, from segment: Segment) {
+        segment.markers.removeAll { $0.id == marker.id }
     }
 
     private func saveMarker(at screenPoint: CGPoint, imageFrame: CGRect) {
