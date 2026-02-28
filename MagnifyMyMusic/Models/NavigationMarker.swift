@@ -46,7 +46,7 @@ class NavigationMarker: Identifiable, Codable {
     }
 }
 
-enum NavigationMarkerType: Codable, Sendable {
+enum NavigationMarkerType: Codable, Sendable, Equatable {
     // MARK: - Repeats (simple, no volta)
     
     /// Marks the start of a repeated section in the score (||:).
@@ -93,9 +93,26 @@ enum NavigationMarkerType: Codable, Sendable {
     case fine
     
     // MARK: - V2 Cases (Deferred)
-    
+
     // **V2:** Add case variants for:
     // - timeOnly modifier (which pass triggers a jump) — rare in printed music
     // - afterJump (whether repeats honor after D.S./D.C.) — pick sensible default for now: skip repeats after jump. Consider move to document level
     // - forwardRepeatImplied — very rare edge case (minuet/trio forms)
+}
+
+extension NavigationMarkerType {
+    var displayName: String {
+        switch self {
+        case .repeatForward:        return "||:"
+        case .repeatBackward:       return ":||"
+        case .volta(let numbers):   return numbers.map(String.init).joined(separator: ",") + "."
+        case .finalVoltaEnd:        return "Volta End"
+        case .segno:                return "Segno"
+        case .coda:                 return "Coda"
+        case .dacapo:               return "D.C."
+        case .dalsegno:             return "D.S."
+        case .tocoda:               return "To Coda"
+        case .fine:                 return "Fine"
+        }
+    }
 }

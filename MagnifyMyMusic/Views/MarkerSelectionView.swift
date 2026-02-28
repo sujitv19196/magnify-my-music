@@ -41,7 +41,7 @@ struct MarkerTypePickerView: View {
                     selectedMarkerType = option.type
                     dismiss()
                 } label: {
-                    Text(option.label)
+                    Text(option.type.displayName)
                 }
             }
             .navigationTitle("Add marker")

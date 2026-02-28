@@ -18,7 +18,7 @@ struct BoundingBoxEditorView: View {
     var body: some View {
         GeometryReader { geometry in
             if let image = try? store.loadImage(imagePath, from: document.id) {
-                let imageSegment = calculateImageSegment(containerSize: geometry.size, imageSize: image.size)
+                let imageFrame = calculateImageFrame(containerSize: geometry.size, imageSize: image.size)
                 
                 ZStack {
                     Image(uiImage: image)
@@ -26,10 +26,10 @@ struct BoundingBoxEditorView: View {
                         .aspectRatio(contentMode: .fit)
                     
                     ForEach(segmentsForCurrentImage) { segment in
-                        let boxWidth = segment.boundingBoxWidth * imageSegment.width
-                        let boxHeight = segment.boundingBoxHeight * imageSegment.height
-                        let boxX = imageSegment.minX + segment.boundingBoxX * imageSegment.width
-                        let boxY = imageSegment.minY + segment.boundingBoxY * imageSegment.height
+                        let boxWidth = segment.boundingBoxWidth * imageFrame.width
+                        let boxHeight = segment.boundingBoxHeight * imageFrame.height
+                        let boxX = imageFrame.minX + segment.boundingBoxX * imageFrame.width
+                        let boxY = imageFrame.minY + segment.boundingBoxY * imageFrame.height
                         
                         Rectangle()
                             .stroke(Color.blue, lineWidth: 2)
@@ -61,8 +61,8 @@ struct BoundingBoxEditorView: View {
                     DragGesture(minimumDistance: 0)
                         .onChanged { value in
                             // Clamp coordinates to image bounds
-                            let clampedStart = clampToImage(point: dragStart, imageSegment: imageSegment)
-                            let clampedCurrent = clampToImage(point: value.location, imageSegment: imageSegment)
+                            let clampedStart = clampToImage(point: dragStart, imageFrame: imageFrame)
+                            let clampedCurrent = clampToImage(point: value.location, imageFrame: imageFrame)
                             
                             let width = abs(clampedCurrent.x - clampedStart.x)
                             let height = abs(clampedCurrent.y - clampedStart.y)
@@ -73,12 +73,12 @@ struct BoundingBoxEditorView: View {
                         }
                         .onEnded { value in
                             if let box = currentBox, box.width > 20, box.height > 20 {
-                                // Normalize relative to image segment, not container
+                                // Normalize relative to image frame, not container
                                 let normalizedBox = CGRect(
-                                    x: (box.origin.x - imageSegment.minX) / imageSegment.width,
-                                    y: (box.origin.y - imageSegment.minY) / imageSegment.height,
-                                    width: box.width / imageSegment.width,
-                                    height: box.height / imageSegment.height
+                                    x: (box.origin.x - imageFrame.minX) / imageFrame.width,
+                                    y: (box.origin.y - imageFrame.minY) / imageFrame.height,
+                                    width: box.width / imageFrame.width,
+                                    height: box.height / imageFrame.height
                                 )
                                 
                                 let segment = Segment(
@@ -107,37 +107,10 @@ struct BoundingBoxEditorView: View {
         }
     }
     
-    private func calculateImageSegment(containerSize: CGSize, imageSize: CGSize) -> CGRect {
-        let imageAspect = imageSize.width / imageSize.height
-        let containerAspect = containerSize.width / containerSize.height
-        
-        let segmentSize: CGSize
-        if imageAspect > containerAspect {
-            // Image is wider - fit to width
-            segmentSize = CGSize(
-                width: containerSize.width,
-                height: containerSize.width / imageAspect
-            )
-        } else {
-            // Image is taller - fit to height
-            segmentSize = CGSize(
-                width: containerSize.height * imageAspect,
-                height: containerSize.height
-            )
-        }
-        
-        let origin = CGPoint(
-            x: (containerSize.width - segmentSize.width) / 2,
-            y: (containerSize.height - segmentSize.height) / 2
-        )
-        
-        return CGRect(origin: origin, size: segmentSize)
-    }
-    
-    private func clampToImage(point: CGPoint, imageSegment: CGRect) -> CGPoint {
+    private func clampToImage(point: CGPoint, imageFrame: CGRect) -> CGPoint {
         return CGPoint(
-            x: min(max(point.x, imageSegment.minX), imageSegment.maxX),
-            y: min(max(point.y, imageSegment.minY), imageSegment.maxY)
+            x: min(max(point.x, imageFrame.minX), imageFrame.maxX),
+            y: min(max(point.y, imageFrame.minY), imageFrame.maxY)
         )
     }
     

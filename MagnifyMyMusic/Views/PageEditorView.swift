@@ -26,10 +26,17 @@ struct PageEditorView: View {
         ZStack(alignment: .bottom) {
             if !document.imagePaths.isEmpty, selectedImageIndex < document.imagePaths.count {
                 EditorScrollView(zoomScale: $zoomScale) {
-                    BoundingBoxEditorView(
-                        document: document,
-                        imagePath: document.imagePaths[selectedImageIndex]
-                    )
+                    ZStack {
+                        BoundingBoxEditorView(
+                            document: document,
+                            imagePath: document.imagePaths[selectedImageIndex]
+                        )
+                        MarkerPlacementView(
+                            document: document,
+                            imagePath: document.imagePaths[selectedImageIndex],
+                            selectedMarkerType: $selectedMarkerType
+                        )
+                    }
                 }
             } else if document.imagePaths.isEmpty {
                 ContentUnavailableView(
