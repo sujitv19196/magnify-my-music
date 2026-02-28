@@ -11,6 +11,7 @@ struct PageSelectView: View {
     @Bindable var document: SheetMusicDocument
     @Environment(DocumentStore.self) var store: DocumentStore
     @Environment(\.dismiss) private var dismiss
+    @State private var showingEditSheet = false
 
     private let columns = [
         GridItem(.flexible()),
@@ -51,14 +52,23 @@ struct PageSelectView: View {
             }
             .padding()
         }
-        .navigationTitle(document.name)
         .navigationBarBackButtonHidden(true)
+        .sheet(isPresented: $showingEditSheet) {
+            ModifyDocumentView(document: document)
+        }
         .toolbar {
             ToolbarItem(placement: .navigationBarLeading) {
                 Button {
                     dismiss()
                 } label: {
                     Label("Library", systemImage: "books.vertical")
+                }
+            }
+            ToolbarItem(placement: .navigationBarLeading) {
+                Button {
+                    showingEditSheet = true
+                } label: {
+                    Label("Edit", systemImage: "square.and.pencil")
                 }
             }
             ToolbarItem(placement: .primaryAction) {

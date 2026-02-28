@@ -35,7 +35,7 @@ struct DocumentListView: View {
                 }
             }
             .sheet(isPresented: $showingCreateSheet) {
-                CreateDocumentView()
+                ModifyDocumentView()
             }
         }
     }
