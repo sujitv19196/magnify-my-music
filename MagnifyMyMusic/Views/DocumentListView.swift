@@ -24,7 +24,8 @@ struct DocumentListView: View {
                 }
                 .onDelete(perform: deleteDocuments)
             }
-            .navigationTitle("Magnify My Music")
+            .padding(.top, 16)
+            .navigationTitle("My Music")
             .toolbar {
                 ToolbarItem(placement: .primaryAction) {
                     Button {

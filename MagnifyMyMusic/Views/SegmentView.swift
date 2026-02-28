@@ -12,12 +12,24 @@ struct SegmentView: View {
     @Bindable var segment: Segment
     let image: UIImage
     let tool: PKInkingTool
-    
+    var startX: Double = 0.0
+    var endX: Double = 1.0
+
     @State private var canvas = PKCanvasView()
     @State private var drawing = PKDrawing()
-    
+
+    private var cropRect: CGRect {
+        let box = segment.boundingBox
+        return CGRect(
+            x: box.minX + startX * box.width,
+            y: box.minY,
+            width: (endX - startX) * box.width,
+            height: box.height
+        )
+    }
+
     var body: some View {
-        if let croppedImage = image.cropped(to: segment.boundingBox) {
+        if let croppedImage = image.cropped(to: cropRect) {
             let aspectRatio = croppedImage.size.width / croppedImage.size.height
             
             ZStack {

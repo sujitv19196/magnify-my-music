@@ -103,9 +103,9 @@ enum NavigationMarkerType: Codable, Sendable, Equatable {
 extension NavigationMarkerType {
     var displayName: String {
         switch self {
-        case .repeatForward:        return "||:"
-        case .repeatBackward:       return ":||"
-        case .volta(let numbers):   return numbers.map(String.init).joined(separator: ",") + "."
+        case .repeatForward:        return "Forward Repeat"
+        case .repeatBackward:       return "Backward Repeat"
+        case .volta(let numbers):   return "Volta " + numbers.map(String.init).joined(separator: ",")
         case .finalVoltaEnd:        return "Volta End"
         case .segno:                return "Segno"
         case .coda:                 return "Coda"

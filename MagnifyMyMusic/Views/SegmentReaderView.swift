@@ -56,7 +56,9 @@ struct SegmentReaderView: View {
                                 SegmentView(
                                     segment: step.segment,
                                     image: image,
-                                    tool: session.currentTool
+                                    tool: session.currentTool,
+                                    startX: step.startX,
+                                    endX: step.endX
                                 )
                                 .frame(height: geometry.size.height * segmentHeightRatio)
                             }
