@@ -38,7 +38,7 @@ Documents are stored as `.magnify` bundles under `Documents/MagnifyDocuments/<uu
   manifest.json      ← lightweight metadata for the list view
   document.json      ← full document tree (segments + markers)
   images/
-    <uuid>.jpg       ← page images saved at JPEG 90% quality
+    <uuid>.png       ← page images saved as PNG (lossless)
 ```
 `DocumentStore` is `@Observable` and injected app-wide via `.environment(documentStore)`.
 
@@ -75,4 +75,4 @@ DocumentListView
 
 ### Previews
 
-`PreviewHelper` (compiled only in `#if DEBUG`) creates a fixed-UUID document and writes placeholder JPEG images from `TestSheetMusic1`/`TestSheetMusic2` asset catalog entries. All view previews use `PreviewHelper.createPreviewStore()` and `PreviewHelper.createSampleDocument()`.
+`PreviewHelper` (compiled only in `#if DEBUG`) creates a fixed-UUID document and writes placeholder PNG images from `TestSheetMusic1`/`TestSheetMusic2` asset catalog entries. All view previews use `PreviewHelper.createPreviewStore()` and `PreviewHelper.createSampleDocument()`.

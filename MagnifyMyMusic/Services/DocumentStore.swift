@@ -27,7 +27,7 @@ struct DocumentManifest: Identifiable, Codable {
 ///     manifest.json      <- lightweight metadata (for list view)
 ///     document.json      <- full document tree (metadata + segments + markers)
 ///     images/
-///       page_0.jpg
+///       page_0.png
 /// ```
 @Observable
 class DocumentStore {
@@ -158,17 +158,17 @@ class DocumentStore {
         documentList.removeAll { $0.id == id }
     }
         
-    /// Saves a JPEG image into the document's bundle with a UUID-based filename.
-    /// - Returns: The filename (e.g. "A3F2...jpg") to store in `imagePaths`.
+    /// Saves a PNG image into the document's bundle with a UUID-based filename.
+    /// - Returns: The filename (e.g. "A3F2...png") to store in `imagePaths`.
     @discardableResult
     func saveImage(_ image: UIImage, to documentId: UUID) throws -> String {
         let images = imagesURL(for: documentId)
         try fileManager.createDirectory(at: images, withIntermediateDirectories: true)
         
-        let filename = "\(UUID().uuidString).jpg"
+        let filename = "\(UUID().uuidString).png"
         let url = images.appendingPathComponent(filename)
-        
-        guard let data = image.jpegData(compressionQuality: 0.9) else {
+
+        guard let data = image.pngData() else {
             throw DocumentStoreError.imageCompressionFailed
         }
         
@@ -202,7 +202,7 @@ enum DocumentStoreError: LocalizedError {
     
     var errorDescription: String? {
         switch self {
-        case .imageCompressionFailed: "Failed to compress image to JPEG"
+        case .imageCompressionFailed: "Failed to encode image as PNG"
         case .invalidImage: "File is not a valid image"
         }
     }

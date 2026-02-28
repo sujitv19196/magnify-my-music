@@ -18,7 +18,7 @@ struct PreviewHelper {
         doc.id = sampleDocId
         
         // Placeholder filenames — actual images are created by createPreviewStore()
-        doc.imagePaths = ["preview_page_0.jpg", "preview_page_1.jpg"]
+        doc.imagePaths = ["preview_page_0.png", "preview_page_1.png"]
         
         // Add sample segments aligned with actual staff systems
         let segment1 = Segment(
@@ -88,7 +88,7 @@ struct PreviewHelper {
             let fileURL = imagesDir.appendingPathComponent(filename)
             if !FileManager.default.fileExists(atPath: fileURL.path),
                let image = UIImage(named: assetName) {
-                try? image.jpegData(compressionQuality: 0.9)?.write(to: fileURL)
+                try? image.pngData()?.write(to: fileURL)
             }
         }
         
