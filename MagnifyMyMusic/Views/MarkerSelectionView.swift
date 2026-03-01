@@ -17,8 +17,7 @@ private struct MarkerTypeOption: Identifiable {
 private let markerTypeOptions: [MarkerTypeOption] = [
     MarkerTypeOption(label: "Repeat Forward (||:)", type: .repeatForward),
     MarkerTypeOption(label: "Repeat Backward (:||)", type: .repeatBackward(times: 1)),
-    MarkerTypeOption(label: "First Ending (1.)", type: .volta(numbers: [1])),
-    MarkerTypeOption(label: "Second Ending (2.)", type: .volta(numbers: [2])),
+    MarkerTypeOption(label: "Volta Start", type: .volta(numbers: [1])),
     // TODO: Maintain some state of what are the current markers and which options are available
     MarkerTypeOption(label: "Final Ending", type: .finalVoltaEnd),
     MarkerTypeOption(label: "Segno", type: .segno(label: nil)),
@@ -41,7 +40,8 @@ struct MarkerTypePickerView: View {
                     selectedMarkerType = option.type
                     dismiss()
                 } label: {
-                    Text(option.type.displayName)
+                    Text(option.label)
+                        .foregroundStyle(.primary)
                 }
             }
             .navigationTitle("Add marker")
