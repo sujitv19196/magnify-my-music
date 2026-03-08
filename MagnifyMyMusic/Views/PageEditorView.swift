@@ -46,10 +46,27 @@ struct PageEditorView: View {
                 )
             }
 
+                VStack {
+                Group {
+                    if selectedMarkerType == nil {
+                        Text("Drag to outline each row of music, then mark repeats or jumps within each box")
+                    } else {
+                        Text("Tap or drag within a segment to place")
+                    }
+                }
+                .font(AppTheme.hintFont)
+                .foregroundStyle(.secondary)
+                .multilineTextAlignment(.center)
+                .padding(.horizontal, 16).padding(.vertical, 10)
+                .background(.regularMaterial, in: Capsule())
+                .padding(.top, 16)
+                Spacer()
+            }
+
             Button {
                 showMarkerSheet = true
             } label: {
-                Text("Add Repeat or Jump")
+                Text("Mark Repeat or Jump")
                     .font(AppTheme.labelFont)
                     .foregroundStyle(.white)
                     .padding(.horizontal, 20)

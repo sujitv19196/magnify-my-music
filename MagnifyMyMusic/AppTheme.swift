@@ -27,7 +27,7 @@ enum AppTheme {
     static let displayFont = Font.title2.weight(.bold)
     static let bodyFont    = Font.body.weight(.semibold)
     static let labelFont   = Font.body.weight(.bold)
-    static let hintFont    = Font.subheadline.weight(.medium)
+    static let hintFont    = Font.callout.weight(.semibold)
     static let captionFont = Font.callout.weight(.semibold)
 
     static let markerBarWidth: CGFloat = 10

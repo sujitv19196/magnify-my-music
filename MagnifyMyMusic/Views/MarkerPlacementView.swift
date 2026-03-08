@@ -72,15 +72,6 @@ struct MarkerPlacementView: View {
                     // ── Layer 1: saved markers ────────────────────────────
                     savedMarkersOverlay(imageFrame: imageFrame)
 
-                    // ── Layer 2: placement hint ───────────────────────────
-                    if selectedMarkerType != nil, currentPos == nil {
-                        Text("Tap or drag within a segment to place")
-                            .font(AppTheme.hintFont)
-                            .foregroundStyle(.secondary)
-                            .padding(.horizontal, 16).padding(.vertical, 10)
-                            .background(.regularMaterial, in: Capsule())
-                    }
-
                     // ── Layer 3: pending bar visual (no hit testing) ──────
                     if let pos = currentPos, let seg = currentSeg {
                         let liveX  = liveLocation?.x ?? pos.x
