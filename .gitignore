@@ -2,3 +2,7 @@
 .DS_Store
 MagnifyMyMusic.xcodeproj/xcuserdata/
 MagnifyMyMusic.xcodeproj/project.xcworkspace/
+DerivedData/
+*.xcuserstate
+*.ipa
+*.xcarchive
