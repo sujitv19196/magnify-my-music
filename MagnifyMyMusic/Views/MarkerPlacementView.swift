@@ -31,31 +31,87 @@ struct MarkerPlacementView: View {
 
     @Environment(DocumentStore.self) var store
 
-    /// Committed dot position (updated on each drag end).
-    @State private var dotPosition: CGPoint = .zero
-    /// Live drag delta — auto-resets to .zero when the gesture ends.
-    @GestureState private var dragOffset: CGSize = .zero
-
-    /// Shared numeric config value for parameterized marker types (volta number or repeat times).
+    /// Live finger position while the gesture is active; resets to nil on lift.
+    @GestureState private var liveLocation: CGPoint? = nil
+    /// Last position where the finger lifted inside a valid segment.
+    @State private var committedPosition: CGPoint? = nil
+    /// Shared numeric config for parameterized marker types.
     @State private var configValue: Int? = nil
 
     var body: some View {
         GeometryReader { geometry in
             if let image = try? store.loadImage(imagePath, from: document.id) {
                 let imageFrame = calculateImageFrame(containerSize: geometry.size, imageSize: image.size)
+
+                let currentPos = liveLocation ?? committedPosition
+                let currentSeg = currentPos.flatMap { segmentAt($0, imageFrame: imageFrame) }
+
                 ZStack {
+                    // ── Layer 0 (bottom): gesture capture ─────────────────
+                    // Sits below everything so saved-marker buttons and action
+                    // buttons (higher layers) always win over this gesture.
+                    if selectedMarkerType != nil {
+                        Color.clear
+                            .contentShape(Rectangle())
+                            .gesture(
+                                DragGesture(minimumDistance: 0)
+                                    .updating($liveLocation) { value, state, _ in
+                                        guard selectedMarkerType != nil else { return }
+                                        state = value.location
+                                    }
+                                    .onEnded { value in
+                                        guard selectedMarkerType != nil else { return }
+                                        let loc = value.location
+                                        if segmentAt(loc, imageFrame: imageFrame) != nil {
+                                            committedPosition = loc
+                                        }
+                                    }
+                            )
+                    }
+
+                    // ── Layer 1: saved markers ────────────────────────────
                     savedMarkersOverlay(imageFrame: imageFrame)
 
-                    if let markerType = selectedMarkerType {
-                        pendingDotOverlay(markerType: markerType, imageFrame: imageFrame)
+                    // ── Layer 2: placement hint ───────────────────────────
+                    if selectedMarkerType != nil, currentPos == nil {
+                        Text("Tap or drag within a segment to place")
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                            .padding(.horizontal, 16).padding(.vertical, 10)
+                            .background(.regularMaterial, in: Capsule())
+                    }
+
+                    // ── Layer 3: pending bar visual (no hit testing) ──────
+                    if let pos = currentPos, let seg = currentSeg {
+                        let liveX  = liveLocation?.x ?? pos.x
+                        let segTop = imageFrame.minY + seg.boundingBoxY * imageFrame.height
+                        let segH   = seg.boundingBoxHeight * imageFrame.height
+
+                        Rectangle()
+                            .fill(Color.accentColor.opacity(0.55))
+                            .frame(width: 8, height: segH)
+                            .allowsHitTesting(false)
+                            .position(x: liveX, y: segTop + segH / 2)
+                    }
+
+                    // ── Layer 4 (top): action buttons ─────────────────────
+                    // Rendered last so they receive touches before lower layers.
+                    if let markerType = selectedMarkerType,
+                       let pos = currentPos,
+                       let seg = currentSeg {
+                        actionsPanel(
+                            markerType: markerType,
+                            position: pos,
+                            segment: seg,
+                            imageFrame: imageFrame
+                        )
                     }
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .onChange(of: selectedMarkerType) { _, newType in
-                    if newType != nil {
-                        dotPosition = CGPoint(x: imageFrame.midX, y: imageFrame.midY)
-                        // Configurable types default to 1 so the stepper is shown immediately.
-                        switch newType! {
+                    committedPosition = nil
+                    if let type = newType {
+                        switch type {
                         case .repeatBackward, .volta: configValue = 1
                         default: configValue = nil
                         }
@@ -65,174 +121,126 @@ struct MarkerPlacementView: View {
         }
     }
 
-    // MARK: - Saved markers
+    // MARK: - Saved markers (vertical lines)
 
     @ViewBuilder
     private func savedMarkersOverlay(imageFrame: CGRect) -> some View {
         ForEach(segmentsForCurrentImage) { segment in
+            let segTop = imageFrame.minY + segment.boundingBoxY * imageFrame.height
+            let segH   = segment.boundingBoxHeight * imageFrame.height
+
             ForEach(segment.markers) { marker in
                 let screenX = imageFrame.minX
                     + (segment.boundingBoxX + marker.xPosition * segment.boundingBoxWidth)
                     * imageFrame.width
-                let screenY = imageFrame.minY
-                    + (segment.boundingBoxY + segment.boundingBoxHeight / 2.0)
-                    * imageFrame.height
 
-                savedMarkerBadge(marker: marker, segment: segment,
-                                 at: CGPoint(x: screenX, y: screenY))
-            }
-        }
-    }
+                // Vertical line
+                Rectangle()
+                    .fill(Color.accentColor.opacity(0.55))
+                    .frame(width: 8, height: segH)
+                    .position(x: screenX, y: segTop + segH / 2)
 
-    @ViewBuilder
-    private func savedMarkerBadge(marker: NavigationMarker, segment: Segment, at point: CGPoint) -> some View {
-        VStack(spacing: 0) {
-            HStack(spacing: 2) {
-                Text(marker.type.displayName)
-                    .font(.callout.weight(.bold))
-                    .foregroundStyle(.primary)
-                    .padding(.leading, 10)
-                    .padding(.vertical, 5)
-
-                Button {
-                    deleteMarker(marker, from: segment)
-                } label: {
-                    Image(systemName: "xmark.circle.fill")
-                        .font(.system(size: 18))
-                        .foregroundColor(.red)
-                        .background(Circle().fill(Color.white).padding(1))
-                }
-                .padding(.trailing, 6)
-            }
-            .background(
-                RoundedRectangle(cornerRadius: 8)
-                    .fill(Color.accentColor)
-                    .shadow(color: .secondary.opacity(0.5), radius: 3, y: 1)
-            )
-
-            Circle()
-                .fill(Color.accentColor)
-                .frame(width: 22, height: 22)
-                .overlay(Circle().stroke(Color.secondary.opacity(0.3), lineWidth: 1.5))
-        }
-        .position(x: point.x, y: point.y - 28)
-    }
-
-    // MARK: - Pending dot (being placed)
-
-    @ViewBuilder
-    private func pendingDotOverlay(markerType: NavigationMarkerType, imageFrame: CGRect) -> some View {
-        let live = CGPoint(
-            x: dotPosition.x + dragOffset.width,
-            y: dotPosition.y + dragOffset.height
-        )
-        let inSegment = containingSegment(for: live, imageFrame: imageFrame) != nil
-        let configOK = isConfigValid(for: markerType)
-        let canSave = inSegment && configOK
-
-        // Taller offset when the config row is visible so the overlay doesn't overlap the dot.
-        let hasConfigRow = requiresConfig(markerType)
-        let yOffset: CGFloat = hasConfigRow ? -82 : -56
-
-        VStack(spacing: 8) {
-            // Numeric config row — only for parameterized types
-            if case .repeatBackward = markerType {
-                numericConfigRow(label: "×", prompt: "Set repeat count")
-            } else if case .volta = markerType {
-                numericConfigRow(label: "Ending", prompt: "Set ending number")
-            }
-
-            // Action bar
-            HStack(spacing: 10) {
-                Text(markerType.displayName)
-                    .font(.subheadline.weight(.semibold))
-                    .foregroundStyle(.primary)
-                    .padding(.horizontal, 14).padding(.vertical, 8)
-                    .background(Capsule().fill(Color.accentColor))
-
-                Button {
-                    saveMarker(at: live, imageFrame: imageFrame)
-                } label: {
-                    Text("Save")
-                        .font(.subheadline.weight(.semibold))
+                // Label + delete badge at top of line
+                HStack(spacing: 4) {
+                    Text(marker.type.displayName)
+                        .font(.caption.weight(.bold))
                         .foregroundStyle(.primary)
-                        .padding(.horizontal, 14).padding(.vertical, 8)
-                        .background(Capsule().fill(canSave ? Color.accentColor : Color.secondary))
+                    Button {
+                        deleteMarker(marker, from: segment)
+                    } label: {
+                        Image(systemName: "xmark.circle.fill")
+                            .foregroundStyle(.red)
+                    }
+                    .buttonStyle(.plain)
                 }
-                .disabled(!canSave)
-                .buttonStyle(.plain)
-
-                Button { selectedMarkerType = nil } label: {
-                    Image(systemName: "xmark.circle.fill")
-                        .font(.system(size: 28))
-                        .foregroundColor(.red)
-                        .background(Circle().fill(Color.white))
-                }
+                .padding(.horizontal, 8).padding(.vertical, 4)
+                .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 6))
+                .fixedSize()
+                .position(x: screenX - 60, y: segTop + 16)
             }
         }
-        .position(x: live.x, y: live.y + yOffset)
-
-        // Draggable dot — positioned at `live` so the gesture coordinate space never shifts as the view moves.
-        Circle()
-            .fill(Color.accentColor)
-            .frame(width: 34, height: 34)
-            .overlay(Circle().stroke(Color.primary.opacity(0.3), lineWidth: 2.5))
-            .shadow(color: .secondary.opacity(0.4), radius: 4, y: 2)
-            .position(x: live.x, y: live.y)
-            .gesture(
-                DragGesture(minimumDistance: 0)
-                    .updating($dragOffset) { value, state, _ in
-                        state = value.translation
-                    }
-                    .onEnded { value in
-                        dotPosition.x += value.translation.width
-                        dotPosition.y += value.translation.height
-                    }
-            )
     }
 
-    /// A compact row that shows a "set number" prompt when unset, or a Stepper once the user taps in.
+    // MARK: - Action panel (below the bar)
+
     @ViewBuilder
-    private func numericConfigRow(label: String, prompt: String) -> some View {
-        Group {
+    private func actionsPanel(
+        markerType: NavigationMarkerType,
+        position: CGPoint,
+        segment: Segment,
+        imageFrame: CGRect
+    ) -> some View {
+        let liveX   = liveLocation?.x ?? position.x
+        let segTop  = imageFrame.minY + segment.boundingBoxY * imageFrame.height
+        let segH    = segment.boundingBoxHeight * imageFrame.height
+        let barBotY = segTop + segH
+
+        let isCommitted = liveLocation == nil && committedPosition != nil
+        let canSave = isCommitted && isConfigValid(for: markerType)
+
+        HStack(spacing: 10) {
+            // Numeric config for parameterised types
             if let n = configValue {
-                HStack(spacing: 6) {
-                    Text("\(label) \(n)")
+                HStack(spacing: 4) {
+                    Text(configDisplayString(markerType: markerType, value: n))
                         .font(.subheadline.weight(.semibold))
-                        .foregroundStyle(.primary)
+                        .monospacedDigit()
                     Stepper(
-                        "\(label) \(n)",
-                        value: Binding(get: { n }, set: { configValue = $0 }),
-                        in: 1...8
+                        configLabel(for: markerType),
+                        value: Binding(get: { n }, set: { configValue = $0 })
                     )
                     .labelsHidden()
                     .fixedSize()
                 }
-            } else {
-                Button {
-                    configValue = 1
-                } label: {
-                    Label(prompt, systemImage: "number.circle")
-                        .font(.subheadline.weight(.semibold))
-                        .foregroundStyle(.primary)
-                }
-                .buttonStyle(.plain)
+                .padding(.horizontal, 10).padding(.vertical, 6)
+                .background(.regularMaterial, in: Capsule())
             }
+
+            Button("Save") {
+                saveMarker(at: CGPoint(x: liveX, y: position.y), imageFrame: imageFrame)
+            }
+            .buttonStyle(.borderedProminent)
+            .disabled(!canSave)
+
+            Button {
+                selectedMarkerType = nil
+            } label: {
+                Image(systemName: "xmark.circle.fill")
+                    .font(.title2)
+                    .foregroundStyle(.secondary)
+                    .background(Circle().fill(Color(uiColor: .systemBackground)))
+            }
+            .buttonStyle(.plain)
         }
-        .padding(.horizontal, 14).padding(.vertical, 8)
-        .background(
-            Capsule()
-                .fill(Color(uiColor: .systemBackground).opacity(0.95))
-                .shadow(color: .secondary.opacity(0.3), radius: 3, y: 1)
-        )
+        .fixedSize()
+        // Centre the panel on the bar's X, 12 pt below the bar bottom
+        .position(x: liveX, y: barBotY + 30)
     }
 
     // MARK: - Helpers
 
-    private func requiresConfig(_ type: NavigationMarkerType) -> Bool {
+    private func segmentAt(_ screenPoint: CGPoint, imageFrame: CGRect) -> Segment? {
+        let normX = (screenPoint.x - imageFrame.minX) / imageFrame.width
+        let normY = (screenPoint.y - imageFrame.minY) / imageFrame.height
+        return segmentsForCurrentImage.first {
+            $0.boundingBox.contains(CGPoint(x: normX, y: normY))
+        }
+    }
+
+    private func configLabel(for type: NavigationMarkerType) -> String {
         switch type {
-        case .repeatBackward, .volta: return true
-        default: return false
+        case .repeatBackward: return "×"
+        case .volta:          return "Ending"
+        default:              return ""
+        }
+    }
+
+    /// Display string for the numeric config (e.g. "× 2" for repeat, "1st ending" for volta).
+    private func configDisplayString(markerType: NavigationMarkerType, value n: Int) -> String {
+        switch markerType {
+        case .repeatBackward: return "Repeat \(n)x"
+        case .volta:          return "\(n.ordinalString) Ending"
+        default:              return ""
         }
     }
 
@@ -243,21 +251,13 @@ struct MarkerPlacementView: View {
         }
     }
 
-    private func containingSegment(for screenPoint: CGPoint, imageFrame: CGRect) -> Segment? {
-        let normX = (screenPoint.x - imageFrame.minX) / imageFrame.width
-        let normY = (screenPoint.y - imageFrame.minY) / imageFrame.height
-        return segmentsForCurrentImage.first {
-            $0.boundingBox.contains(CGPoint(x: normX, y: normY))
-        }
-    }
-
     private func deleteMarker(_ marker: NavigationMarker, from segment: Segment) {
         segment.markers.removeAll { $0.id == marker.id }
     }
 
     private func saveMarker(at screenPoint: CGPoint, imageFrame: CGRect) {
         guard let markerType = selectedMarkerType,
-              let segment = containingSegment(for: screenPoint, imageFrame: imageFrame) else { return }
+              let segment = segmentAt(screenPoint, imageFrame: imageFrame) else { return }
         let normX = (screenPoint.x - imageFrame.minX) / imageFrame.width
         let xPosition = (normX - segment.boundingBoxX) / segment.boundingBoxWidth
 

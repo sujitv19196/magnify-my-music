@@ -15,11 +15,11 @@ private struct MarkerTypeOption: Identifiable {
 
 // TODO: Add assets and icons for each marker type
 private let markerTypeOptions: [MarkerTypeOption] = [
-    MarkerTypeOption(label: "Repeat Forward (||:)", type: .repeatForward),
-    MarkerTypeOption(label: "Repeat Backward (:||)", type: .repeatBackward(times: 1)),
-    MarkerTypeOption(label: "Volta Start", type: .volta(numbers: [1])),
+    MarkerTypeOption(label: "Start of Repeat (||:)", type: .repeatForward),
+    MarkerTypeOption(label: "End of Simple Repeat (:||)", type: .repeatBackward(times: 1)),
+    MarkerTypeOption(label: "Start of 1st/2nd Ending", type: .volta(numbers: [1])),
     // TODO: Maintain some state of what are the current markers and which options are available
-    MarkerTypeOption(label: "Final Ending", type: .finalVoltaEnd),
+    MarkerTypeOption(label: "End of Final Ending", type: .finalVoltaEnd),
     MarkerTypeOption(label: "Segno", type: .segno(label: nil)),
     MarkerTypeOption(label: "Coda", type: .coda(label: nil)),
     MarkerTypeOption(label: "D.C.", type: .dacapo),
@@ -44,7 +44,7 @@ struct MarkerTypePickerView: View {
                         .foregroundStyle(.primary)
                 }
             }
-            .navigationTitle("Add marker")
+            .navigationTitle("Add Marker")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {

@@ -105,7 +105,7 @@ extension NavigationMarkerType {
         switch self {
         case .repeatForward:        return "Forward Repeat"
         case .repeatBackward(let times): return times > 1 ? "Backward Repeat (×\(times))" : "Backward Repeat"
-        case .volta(let numbers):   return "Volta " + numbers.map(String.init).joined(separator: ",")
+        case .volta(let numbers):   return numbers.map { $0.ordinalString }.joined(separator: ", ") + " Ending"
         case .finalVoltaEnd:        return "Volta End"
         case .segno:                return "Segno"
         case .coda:                 return "Coda"
