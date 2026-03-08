@@ -15,6 +15,7 @@ struct SegmentReaderView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.dismissToRoot) private var dismissToRoot
     @State private var showToolPicker = false
+    @State private var showScrollSettings = false
 
     init(document: SheetMusicDocument) {
         self._document = Bindable(wrappedValue: document)
@@ -65,6 +66,15 @@ struct SegmentReaderView: View {
             }
             ToolbarItem(placement: .primaryAction) {
                 Button {
+                    showScrollSettings.toggle()
+                } label: {
+                    Image(systemName: "arrow.right.to.line")
+                        .font(.title2)
+                }
+                .accessibilityLabel("Adjust pedal scroll distance")
+            }
+            ToolbarItem(placement: .primaryAction) {
+                Button {
                     showToolPicker.toggle()
                 } label: {
                     Image(systemName: "pencil.tip.crop.circle")
@@ -75,6 +85,23 @@ struct SegmentReaderView: View {
         }
         .sheet(isPresented: $showToolPicker) {
             DrawingToolPickerView(currentTool: $session.currentTool)
+        }
+        .sheet(isPresented: $showScrollSettings) {
+            VStack(spacing: 24) {
+                Text("Pedal Scroll Distance")
+                    .font(.headline)
+                Text("\(Int(session.pedalScrollDistance)) pt")
+                    .font(.title2.monospacedDigit())
+                    .foregroundStyle(.secondary)
+                Slider(
+                    value: Bindable(session).pedalScrollDistance,
+                    in: 50...800,
+                    step: 10
+                )
+                .padding(.horizontal)
+            }
+            .padding()
+            .presentationDetents([.height(200)])
         }
         .onKeyPress(.space) {
             session.advanceByPedal()

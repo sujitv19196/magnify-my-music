@@ -22,8 +22,7 @@ class ReadingSession {
     
     // User preferences stored in UserDefaults
     var pedalScrollDistance: CGFloat {
-        get { UserDefaults.standard.object(forKey: "pedalScrollDistance") as? CGFloat ?? 200 }
-        set { UserDefaults.standard.set(newValue, forKey: "pedalScrollDistance") }
+        didSet { UserDefaults.standard.set(pedalScrollDistance, forKey: "pedalScrollDistance-\(document.id)") }
     }
 
     var zoomScale: CGFloat {
@@ -34,6 +33,7 @@ class ReadingSession {
     init(document: SheetMusicDocument) {
         self.document = document
         self.currentTool = PKInkingTool(.pen, color: .red, width: 2)
+        self.pedalScrollDistance = UserDefaults.standard.object(forKey: "pedalScrollDistance-\(document.id)") as? CGFloat ?? 200
     }
     
     func advanceByPedal() {
