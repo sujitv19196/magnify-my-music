@@ -88,8 +88,9 @@ struct BoundingBoxEditorView: View {
                                 )
                                 
                                 document.segments.append(segment)
+                                try? store.save(document)
                             }
-                            
+
                             currentBox = nil
                         }
                 )
@@ -122,6 +123,7 @@ struct BoundingBoxEditorView: View {
     private func deleteSegment(_ segment: Segment) {
         if let index = document.segments.firstIndex(where: { $0.id == segment.id }) {
             document.segments.remove(at: index)
+            try? store.save(document)
         }
     }
 }

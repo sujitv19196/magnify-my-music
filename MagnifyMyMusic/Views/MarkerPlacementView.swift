@@ -248,6 +248,7 @@ struct MarkerPlacementView: View {
 
     private func deleteMarker(_ marker: NavigationMarker, from segment: Segment) {
         segment.markers.removeAll { $0.id == marker.id }
+        try? store.save(document)
     }
 
     private func saveMarker(at screenPoint: CGPoint, imageFrame: CGRect) {
@@ -267,6 +268,7 @@ struct MarkerPlacementView: View {
         }
 
         segment.markers.append(NavigationMarker(type: finalType, xPosition: xPosition))
+        try? store.save(document)
         selectedMarkerType = nil
     }
 
