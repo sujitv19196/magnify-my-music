@@ -13,7 +13,7 @@ struct PageEditorView: View {
 
     @State private var showMarkerSheet = false
     @State private var selectedMarkerType: NavigationMarkerType?
-    @State private var zoomScale: CGFloat = 1.0
+    @State private var committedBox: CGRect? = nil
 
     let selectedImageIndex: Int
 
@@ -25,11 +25,12 @@ struct PageEditorView: View {
     var body: some View {
         ZStack(alignment: .bottom) {
             if !document.imagePaths.isEmpty, selectedImageIndex < document.imagePaths.count {
-                EditorScrollView(zoomScale: $zoomScale) {
+                EditorScrollView(onCommit: { committedBox = $0 }) {
                     ZStack {
                         BoundingBoxEditorView(
                             document: document,
-                            imagePath: document.imagePaths[selectedImageIndex]
+                            imagePath: document.imagePaths[selectedImageIndex],
+                            committedBox: $committedBox
                         )
                         MarkerPlacementView(
                             document: document,
@@ -46,22 +47,6 @@ struct PageEditorView: View {
                 )
             }
 
-                VStack {
-                Group {
-                    if selectedMarkerType == nil {
-                        Text("Drag to outline each row of music, then mark repeats or jumps within each box")
-                    } else {
-                        Text("Tap or drag within a segment to place")
-                    }
-                }
-                .font(AppTheme.hintFont)
-                .foregroundStyle(.secondary)
-                .multilineTextAlignment(.center)
-                .padding(.horizontal, 16).padding(.vertical, 10)
-                .background(.regularMaterial, in: Capsule())
-                .padding(.top, 16)
-                Spacer()
-            }
 
             Button {
                 showMarkerSheet = true

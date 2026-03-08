@@ -8,81 +8,86 @@
 import SwiftUI
 import UIKit
 
-/// A UIScrollView wrapper that enables pinch-to-zoom and two-finger panning
-/// while leaving single-finger touches free for SwiftUI gestures (bounding box drawing).
+/// Hosts SwiftUI content in a plain UIView with a two-finger bounding box gesture.
+/// The live draft rectangle is drawn via CAShapeLayer directly on the UIKit layer
+/// — no SwiftUI state changes occur during the gesture, keeping CPU low.
 struct EditorScrollView<Content: View>: UIViewRepresentable {
-    @Binding var zoomScale: CGFloat
+    let onCommit: (CGRect) -> Void
     let content: Content
 
-    init(zoomScale: Binding<CGFloat>, @ViewBuilder content: () -> Content) {
-        self._zoomScale = zoomScale
+    init(
+        onCommit: @escaping (CGRect) -> Void,
+        @ViewBuilder content: () -> Content
+    ) {
+        self.onCommit = onCommit
         self.content = content()
     }
 
-    func makeUIView(context: Context) -> UIScrollView {
-        let scrollView = UIScrollView()
-        scrollView.delegate = context.coordinator
-        scrollView.minimumZoomScale = 0.5
-        scrollView.maximumZoomScale = 5.0
-        scrollView.bouncesZoom = true
-        scrollView.showsHorizontalScrollIndicator = false
-        scrollView.showsVerticalScrollIndicator = false
-        scrollView.backgroundColor = .clear
-        // Require two fingers to pan so single-finger drag reaches SwiftUI gestures
-        scrollView.panGestureRecognizer.minimumNumberOfTouches = 2
+    func makeUIView(context: Context) -> UIView {
+        let rootView = UIView()
+        rootView.backgroundColor = .clear
 
         let host = UIHostingController(rootView: content)
         host.view.backgroundColor = .clear
         host.view.translatesAutoresizingMaskIntoConstraints = false
-        scrollView.addSubview(host.view)
+        rootView.addSubview(host.view)
         context.coordinator.host = host
 
         NSLayoutConstraint.activate([
-            host.view.leadingAnchor.constraint(equalTo: scrollView.contentLayoutGuide.leadingAnchor),
-            host.view.trailingAnchor.constraint(equalTo: scrollView.contentLayoutGuide.trailingAnchor),
-            host.view.topAnchor.constraint(equalTo: scrollView.contentLayoutGuide.topAnchor),
-            host.view.bottomAnchor.constraint(equalTo: scrollView.contentLayoutGuide.bottomAnchor),
-            host.view.widthAnchor.constraint(equalTo: scrollView.frameLayoutGuide.widthAnchor),
-            host.view.heightAnchor.constraint(equalTo: scrollView.frameLayoutGuide.heightAnchor),
+            host.view.leadingAnchor.constraint(equalTo: rootView.leadingAnchor),
+            host.view.trailingAnchor.constraint(equalTo: rootView.trailingAnchor),
+            host.view.topAnchor.constraint(equalTo: rootView.topAnchor),
+            host.view.bottomAnchor.constraint(equalTo: rootView.bottomAnchor),
         ])
 
-        return scrollView
+        // CAShapeLayer for live draft rectangle — drawn in UIKit to avoid SwiftUI re-renders
+        let draftLayer = CAShapeLayer()
+        draftLayer.fillColor = UIColor.clear.cgColor
+        draftLayer.strokeColor = UIColor.systemOrange.withAlphaComponent(0.6).cgColor
+        draftLayer.lineWidth = 3.0
+        draftLayer.isHidden = true
+        rootView.layer.addSublayer(draftLayer)
+        context.coordinator.draftLayer = draftLayer
+
+        let coordinator = context.coordinator
+        let gr = TwoFingerBoxGestureRecognizer()
+        gr.cancelsTouchesInView = false
+        gr.delaysTouchesEnded = false
+        gr.onChange = { [weak coordinator] rect in
+            let path = UIBezierPath(rect: rect)
+            coordinator?.draftLayer?.path = path.cgPath
+            coordinator?.draftLayer?.isHidden = false
+        }
+        gr.onCommit = { [weak coordinator] rect in
+            coordinator?.draftLayer?.isHidden = true
+            coordinator?.draftLayer?.path = nil
+            coordinator?.onCommit?(rect)
+        }
+        gr.onCancel = { [weak coordinator] in
+            coordinator?.draftLayer?.isHidden = true
+            coordinator?.draftLayer?.path = nil
+        }
+        rootView.addGestureRecognizer(gr)
+
+        return rootView
     }
 
-    func updateUIView(_ scrollView: UIScrollView, context: Context) {
+    func updateUIView(_ rootView: UIView, context: Context) {
         context.coordinator.host?.rootView = content
+        context.coordinator.onCommit = onCommit
     }
 
     func makeCoordinator() -> Coordinator {
-        Coordinator(zoomScale: $zoomScale)
+        Coordinator(onCommit: onCommit)
     }
 
-    class Coordinator: NSObject, UIScrollViewDelegate {
-        @Binding var zoomScale: CGFloat
+    class Coordinator: NSObject {
         var host: UIHostingController<Content>?
+        var draftLayer: CAShapeLayer?
+        var onCommit: ((CGRect) -> Void)?
 
-        init(zoomScale: Binding<CGFloat>) {
-            self._zoomScale = zoomScale
-        }
-
-        func viewForZooming(in scrollView: UIScrollView) -> UIView? {
-            host?.view
-        }
-
-        func scrollViewDidZoom(_ scrollView: UIScrollView) {
-            zoomScale = scrollView.zoomScale
-            centerContent(in: scrollView)
-        }
-
-        private func centerContent(in scrollView: UIScrollView) {
-            guard let contentView = host?.view else { return }
-            let contentSize = CGSize(
-                width: contentView.frame.width * scrollView.zoomScale,
-                height: contentView.frame.height * scrollView.zoomScale
-            )
-            let horizontal = max(0, (scrollView.bounds.width - contentSize.width) / 2)
-            let vertical = max(0, (scrollView.bounds.height - contentSize.height) / 2)
-            scrollView.contentInset = UIEdgeInsets(top: vertical, left: horizontal, bottom: vertical, right: horizontal)
+        init(onCommit: @escaping (CGRect) -> Void) {
+            self.onCommit = onCommit
         }
     }
 }

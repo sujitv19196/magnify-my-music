@@ -10,31 +10,32 @@ import SwiftUI
 struct BoundingBoxEditorView: View {
     @Bindable var document: SheetMusicDocument
     let imagePath: String
-    
+
+    @Binding var committedBox: CGRect?
+
     @Environment(DocumentStore.self) var store
-    @State private var currentBox: CGRect?
-    @State private var dragStart: CGPoint = .zero
-    
+    @State private var cachedImage: UIImage?
+
     var body: some View {
         GeometryReader { geometry in
-            if let image = try? store.loadImage(imagePath, from: document.id) {
+            if let image = cachedImage {
                 let imageFrame = calculateImageFrame(containerSize: geometry.size, imageSize: image.size)
-                
+
                 ZStack {
                     Image(uiImage: image)
                         .resizable()
                         .aspectRatio(contentMode: .fit)
-                    
+
                     ForEach(segmentsForCurrentImage) { segment in
                         let boxWidth = segment.boundingBoxWidth * imageFrame.width
                         let boxHeight = segment.boundingBoxHeight * imageFrame.height
                         let boxX = imageFrame.minX + segment.boundingBoxX * imageFrame.width
                         let boxY = imageFrame.minY + segment.boundingBoxY * imageFrame.height
-                        
+
                         Rectangle()
                             .stroke(AppTheme.accent1, lineWidth: AppTheme.boundingBoxStrokeWidth)
                             .frame(width: boxWidth, height: boxHeight)
-                            .overlay(alignment: .trailing) {
+                            .overlay(alignment: .topTrailing) {
                                 Button {
                                     deleteSegment(segment)
                                 } label: {
@@ -44,82 +45,52 @@ struct BoundingBoxEditorView: View {
                                         .background(Circle().fill(Color.white))
                                 }
                                 .accessibilityLabel("Delete segment")
-                                .offset(x: 40)
+                                .padding(6)
                             }
                             .position(x: boxX + boxWidth / 2, y: boxY + boxHeight / 2)
                             .id(segment.id)
                     }
-                    if let box = currentBox {
-                        Rectangle()
-                            .stroke(AppTheme.accent1.opacity(0.6), lineWidth: AppTheme.boundingBoxDraftStrokeWidth)
-                            .frame(width: box.width, height: box.height)
-                            .position(x: box.midX, y: box.midY)
-                    }
+
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .contentShape(Rectangle())
-                .gesture(
-                    DragGesture(minimumDistance: 0)
-                        .onChanged { value in
-                            // Clamp coordinates to image bounds
-                            let clampedStart = clampToImage(point: dragStart, imageFrame: imageFrame)
-                            let clampedCurrent = clampToImage(point: value.location, imageFrame: imageFrame)
-                            
-                            let width = abs(clampedCurrent.x - clampedStart.x)
-                            let height = abs(clampedCurrent.y - clampedStart.y)
-                            let x = min(clampedStart.x, clampedCurrent.x)
-                            let y = min(clampedStart.y, clampedCurrent.y)
-                            
-                            currentBox = CGRect(x: x, y: y, width: width, height: height)
-                        }
-                        .onEnded { value in
-                            if let box = currentBox, box.width > 20, box.height > 20 {
-                                // Normalize relative to image frame, not container
-                                let normalizedBox = CGRect(
-                                    x: (box.origin.x - imageFrame.minX) / imageFrame.width,
-                                    y: (box.origin.y - imageFrame.minY) / imageFrame.height,
-                                    width: box.width / imageFrame.width,
-                                    height: box.height / imageFrame.height
-                                )
-                                
-                                let segment = Segment(
-                                    imagePath: imagePath,
-                                    boundingBox: normalizedBox
-                                )
-                                
-                                document.segments.append(segment)
-                                try? store.save(document)
-                            }
-
-                            currentBox = nil
-                        }
-                )
-                .simultaneousGesture(
-                    DragGesture(minimumDistance: 0)
-                        .onChanged { value in
-                            if currentBox == nil {
-                                dragStart = value.startLocation
-                            }
-                        }
-                )
+                .onChange(of: committedBox) { _, newBox in
+                    guard let box = newBox else { return }
+                    let clamped = clampToImage(rect: box, imageFrame: imageFrame)
+                    if clamped.width > 20, clamped.height > 20 {
+                        let normalizedBox = CGRect(
+                            x: (clamped.minX - imageFrame.minX) / imageFrame.width,
+                            y: (clamped.minY - imageFrame.minY) / imageFrame.height,
+                            width: clamped.width / imageFrame.width,
+                            height: clamped.height / imageFrame.height
+                        )
+                        let segment = Segment(imagePath: imagePath, boundingBox: normalizedBox)
+                        document.segments.append(segment)
+                        try? store.save(document)
+                    }
+                    committedBox = nil
+                }
             }
+        }
+        .task {
+            cachedImage = try? store.loadImage(imagePath, from: document.id)
         }
         .onDisappear {
             try? store.save(document)
         }
     }
-    
-    private func clampToImage(point: CGPoint, imageFrame: CGRect) -> CGPoint {
-        return CGPoint(
-            x: min(max(point.x, imageFrame.minX), imageFrame.maxX),
-            y: min(max(point.y, imageFrame.minY), imageFrame.maxY)
-        )
+
+    private func clampToImage(rect: CGRect, imageFrame: CGRect) -> CGRect {
+        let x = max(rect.minX, imageFrame.minX)
+        let y = max(rect.minY, imageFrame.minY)
+        let maxX = min(rect.maxX, imageFrame.maxX)
+        let maxY = min(rect.maxY, imageFrame.maxY)
+        return CGRect(x: x, y: y, width: max(0, maxX - x), height: max(0, maxY - y))
     }
-    
+
     private var segmentsForCurrentImage: [Segment] {
         document.segments.filter { $0.imagePath == imagePath }
     }
-    
+
     private func deleteSegment(_ segment: Segment) {
         if let index = document.segments.firstIndex(where: { $0.id == segment.id }) {
             document.segments.remove(at: index)

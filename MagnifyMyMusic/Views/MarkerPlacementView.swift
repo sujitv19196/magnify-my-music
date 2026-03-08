@@ -30,9 +30,8 @@ struct MarkerPlacementView: View {
     @Binding var selectedMarkerType: NavigationMarkerType?
 
     @Environment(DocumentStore.self) var store
+    @State private var cachedImage: UIImage?
 
-    /// Live finger position while the gesture is active; resets to nil on lift.
-    @GestureState private var liveLocation: CGPoint? = nil
     /// Last position where the finger lifted inside a valid segment.
     @State private var committedPosition: CGPoint? = nil
     /// Shared numeric config for parameterized marker types.
@@ -40,55 +39,41 @@ struct MarkerPlacementView: View {
 
     var body: some View {
         GeometryReader { geometry in
-            if let image = try? store.loadImage(imagePath, from: document.id) {
+            if let image = cachedImage {
                 let imageFrame = calculateImageFrame(containerSize: geometry.size, imageSize: image.size)
 
-                let currentPos = liveLocation ?? committedPosition
-                let currentSeg = currentPos.flatMap { segmentAt($0, imageFrame: imageFrame) }
+                let currentSeg = committedPosition.flatMap { segmentAt($0, imageFrame: imageFrame) }
 
                 ZStack {
-                    // ── Layer 0 (bottom): gesture capture ─────────────────
-                    // Sits below everything so saved-marker buttons and action
-                    // buttons (higher layers) always win over this gesture.
-                    if selectedMarkerType != nil {
-                        Color.clear
-                            .contentShape(Rectangle())
-                            .gesture(
-                                DragGesture(minimumDistance: 0)
-                                    .updating($liveLocation) { value, state, _ in
-                                        guard selectedMarkerType != nil else { return }
-                                        state = value.location
-                                    }
-                                    .onEnded { value in
-                                        guard selectedMarkerType != nil else { return }
-                                        let loc = value.location
-                                        if segmentAt(loc, imageFrame: imageFrame) != nil {
-                                            committedPosition = loc
-                                        }
-                                    }
-                            )
-                    }
+                    // ── Layer 0: UIKit drag overlay — draws live bar via CAShapeLayer,
+                    //    zero SwiftUI re-renders during drag; commits position on finger lift.
+                    // allowsHitTesting mirrors isActive so that when no marker type is selected,
+                    // touches fall through to BoundingBoxEditorView's delete buttons below.
+                    MarkerDragOverlay(
+                        imageFrame: imageFrame,
+                        segments: segmentsForCurrentImage,
+                        isActive: selectedMarkerType != nil,
+                        onCommit: { pos in committedPosition = pos }
+                    )
+                    .allowsHitTesting(selectedMarkerType != nil)
 
                     // ── Layer 1: saved markers ────────────────────────────
                     savedMarkersOverlay(imageFrame: imageFrame)
 
-                    // ── Layer 3: pending bar visual (no hit testing) ──────
-                    if let pos = currentPos, let seg = currentSeg {
-                        let liveX  = liveLocation?.x ?? pos.x
+                    // ── Layer 2: static bar at committed position (shown after finger lifts) ──
+                    if let pos = committedPosition, let seg = currentSeg {
                         let segTop = imageFrame.minY + seg.boundingBoxY * imageFrame.height
                         let segH   = seg.boundingBoxHeight * imageFrame.height
-
                         Rectangle()
                             .fill(AppTheme.accent2.opacity(0.7))
                             .frame(width: AppTheme.markerBarWidth, height: segH)
                             .allowsHitTesting(false)
-                            .position(x: liveX, y: segTop + segH / 2)
+                            .position(x: pos.x, y: segTop + segH / 2)
                     }
 
-                    // ── Layer 4 (top): action buttons ─────────────────────
-                    // Rendered last so they receive touches before lower layers.
+                    // ── Layer 3 (top): action buttons (shown after finger lifts) ──
                     if let markerType = selectedMarkerType,
-                       let pos = currentPos,
+                       let pos = committedPosition,
                        let seg = currentSeg {
                         actionsPanel(
                             markerType: markerType,
@@ -109,6 +94,9 @@ struct MarkerPlacementView: View {
                     }
                 }
             }
+        }
+        .task {
+            cachedImage = try? store.loadImage(imagePath, from: document.id)
         }
     }
 
@@ -163,13 +151,11 @@ struct MarkerPlacementView: View {
         segment: Segment,
         imageFrame: CGRect
     ) -> some View {
-        let liveX   = liveLocation?.x ?? position.x
         let segTop  = imageFrame.minY + segment.boundingBoxY * imageFrame.height
         let segH    = segment.boundingBoxHeight * imageFrame.height
         let barBotY = segTop + segH
 
-        let isCommitted = liveLocation == nil && committedPosition != nil
-        let canSave = isCommitted && isConfigValid(for: markerType)
+        let canSave = isConfigValid(for: markerType)
 
         HStack(spacing: 10) {
             // Numeric config for parameterised types
@@ -190,7 +176,7 @@ struct MarkerPlacementView: View {
             }
 
             Button("Save") {
-                saveMarker(at: CGPoint(x: liveX, y: position.y), imageFrame: imageFrame)
+                saveMarker(at: position, imageFrame: imageFrame)
             }
             .buttonStyle(.borderedProminent)
             .disabled(!canSave)
@@ -209,7 +195,7 @@ struct MarkerPlacementView: View {
         }
         .fixedSize()
         // Centre the panel on the bar's X, 12 pt below the bar bottom
-        .position(x: liveX, y: barBotY + 30)
+        .position(x: position.x, y: barBotY + 30)
     }
 
     // MARK: - Helpers
