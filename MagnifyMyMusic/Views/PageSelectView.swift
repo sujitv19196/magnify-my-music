@@ -12,6 +12,8 @@ struct PageSelectView: View {
     @Environment(DocumentStore.self) var store: DocumentStore
     @Environment(\.dismiss) private var dismiss
     @State private var showingEditSheet = false
+    @State private var showingReorderSheet = false
+    @State private var reorderItems: [PageItem] = []
 
     private let columns = [
         GridItem(.flexible()),
@@ -55,6 +57,15 @@ struct PageSelectView: View {
         .sheet(isPresented: $showingEditSheet) {
             ModifyDocumentView(document: document)
         }
+        .sheet(isPresented: $showingReorderSheet) {
+            PageReorderView(items: $reorderItems, store: store, documentId: document.id) {
+                document.imagePaths = reorderItems.map { $0.path }
+                try? store.save(document)
+                showingReorderSheet = false
+            } onCancel: {
+                showingReorderSheet = false
+            }
+        }
         .toolbar {
             ToolbarItem(placement: .navigationBarLeading) {
                 Button {
@@ -74,6 +85,16 @@ struct PageSelectView: View {
                 }
                 .accessibilityLabel("Edit document details")
             }
+            ToolbarItem(placement: .navigationBarLeading) {
+                Button {
+                    reorderItems = document.imagePaths.map { PageItem(path: $0) }
+                    showingReorderSheet = true
+                } label: {
+                    Text("Reorder")
+                        .font(AppTheme.labelFont)
+                }
+                .accessibilityLabel("Reorder pages")
+            }
             ToolbarItem(placement: .primaryAction) {
                 NavigationLink {
                     SegmentReaderView(document: document)
@@ -87,6 +108,7 @@ struct PageSelectView: View {
         }
     }
 }
+
 
 #Preview {
     let store = PreviewHelper.createPreviewStore()
