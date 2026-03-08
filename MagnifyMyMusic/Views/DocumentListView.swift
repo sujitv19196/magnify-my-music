@@ -11,6 +11,7 @@ struct DocumentListView: View {
     @Environment(DocumentStore.self) var store
     @State private var showingCreateSheet = false
     @State private var path = NavigationPath()
+    @State private var documentToDelete: DocumentManifest? = nil
 
     var body: some View {
         NavigationStack(path: $path) {
@@ -20,8 +21,14 @@ struct DocumentListView: View {
                         Text(manifest.name)
                             .font(AppTheme.bodyFont)
                     }
+                    .swipeActions(edge: .trailing) {
+                        Button(role: .destructive) {
+                            documentToDelete = manifest
+                        } label: {
+                            Label("Delete", systemImage: "trash")
+                        }
+                    }
                 }
-                .onDelete(perform: deleteDocuments)
             }
             .padding(.top, 8)
             .navigationTitle("Magnify My Music")
@@ -43,16 +50,21 @@ struct DocumentListView: View {
             .sheet(isPresented: $showingCreateSheet) {
                 ModifyDocumentView()
             }
+            .alert(item: $documentToDelete) { manifest in
+                Alert(
+                    title: Text("Delete \"\(manifest.name)\"?"),
+                    message: Text("This cannot be undone."),
+                    primaryButton: .destructive(Text("Delete")) {
+                        try? store.delete(id: manifest.id)
+                    },
+                    secondaryButton: .cancel()
+                )
+            }
         }
         .environment(\.dismissToRoot) { path = NavigationPath() }
     }
 
-    private func deleteDocuments(at offsets: IndexSet) {
-        for index in offsets {
-            let manifest = store.documentList[index]
-            try? store.delete(id: manifest.id)
-        }
-    }
+
 }
 
 /// Loads the full document on appear and routes to editor or reader.
