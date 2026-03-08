@@ -10,22 +10,25 @@ import SwiftUI
 struct DocumentListView: View {
     @Environment(DocumentStore.self) var store
     @State private var showingCreateSheet = false
+    @State private var path = NavigationPath()
 
     var body: some View {
-        NavigationStack {
+        NavigationStack(path: $path) {
             List {
                 ForEach(store.documentList) { manifest in
-                    NavigationLink {
-                        DocumentLoaderView(documentId: manifest.id)
-                    } label: {
+                    NavigationLink(value: manifest.id) {
                         Text(manifest.name)
                             .font(AppTheme.bodyFont)
                     }
                 }
                 .onDelete(perform: deleteDocuments)
             }
-            .padding(.top, 16)
-            .navigationTitle("My Music")
+            .padding(.top, 8)
+            .navigationTitle("Magnify My Music")
+            .navigationBarTitleDisplayMode(.inline)
+            .navigationDestination(for: UUID.self) { id in
+                DocumentLoaderView(documentId: id)
+            }
             .toolbar {
                 ToolbarItem(placement: .primaryAction) {
                     Button {
@@ -41,6 +44,7 @@ struct DocumentListView: View {
                 ModifyDocumentView()
             }
         }
+        .environment(\.dismissToRoot) { path = NavigationPath() }
     }
 
     private func deleteDocuments(at offsets: IndexSet) {
@@ -72,6 +76,7 @@ private struct DocumentLoaderView: View {
                 ProgressView()
             }
         }
+        .navigationBarBackButtonHidden(true)
         .task {
             do {
                 document = try store.loadDocument(id: documentId)

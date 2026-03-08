@@ -60,18 +60,6 @@ struct PageEditorView: View {
             .padding(.bottom, 24)
         }
         .navigationBarTitleDisplayMode(.inline)
-        .toolbar {
-            ToolbarItem(placement: .primaryAction) {
-                NavigationLink {
-                    SegmentReaderView(document: document)
-                } label: {
-                    Text("Read")
-                        .font(AppTheme.labelFont)
-                }
-                .accessibilityLabel("Read this document")
-                .disabled(document.segments.isEmpty)
-            }
-        }
         .sheet(isPresented: $showMarkerSheet) {
             MarkerTypePickerView(document: document, selectedMarkerType: $selectedMarkerType)
         }

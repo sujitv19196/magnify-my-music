@@ -12,9 +12,11 @@ struct SegmentReaderView: View {
     @Bindable var document: SheetMusicDocument
     @State private var session: ReadingSession
     @Environment(DocumentStore.self) var store
+    @Environment(\.dismiss) private var dismiss
+    @Environment(\.dismissToRoot) private var dismissToRoot
     @State private var showToolPicker = false
 
-init(document: SheetMusicDocument) {
+    init(document: SheetMusicDocument) {
         self._document = Bindable(wrappedValue: document)
         self._session = State(wrappedValue: ReadingSession(document: document))
     }
@@ -44,13 +46,22 @@ init(document: SheetMusicDocument) {
         .navigationBarBackButtonHidden(true)
         .toolbar {
             ToolbarItem(placement: .navigationBarLeading) {
-                NavigationLink {
-                    PageSelectView(document: document)
-                } label: {
-                    Text("Pages")
-                        .font(AppTheme.labelFont)
+                HStack(spacing: 16) {
+                    Button {
+                        dismissToRoot()
+                    } label: {
+                        Text("Library")
+                            .font(AppTheme.labelFont)
+                    }
+                    .accessibilityLabel("Return to library")
+                    Button {
+                        dismiss()
+                    } label: {
+                        Text("Pages")
+                            .font(AppTheme.labelFont)
+                    }
+                    .accessibilityLabel("Return to page editor")
                 }
-                .accessibilityLabel("Return to page editor")
             }
             ToolbarItem(placement: .primaryAction) {
                 Button {

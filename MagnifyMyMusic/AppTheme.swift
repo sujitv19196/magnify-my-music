@@ -5,6 +5,21 @@
 
 import SwiftUI
 
+// MARK: - Environment: dismiss to library root
+
+private struct DismissToRootKey: EnvironmentKey {
+    static let defaultValue: () -> Void = {}
+}
+
+extension EnvironmentValues {
+    var dismissToRoot: () -> Void {
+        get { self[DismissToRootKey.self] }
+        set { self[DismissToRootKey.self] = newValue }
+    }
+}
+
+// MARK: - Design tokens
+
 enum AppTheme {
     static let accent1 = Color(uiColor: .systemOrange)  // bounding boxes
     static let accent2 = Color(uiColor: .systemTeal)    // markers
