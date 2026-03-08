@@ -32,7 +32,7 @@ struct BoundingBoxEditorView: View {
                         let boxY = imageFrame.minY + segment.boundingBoxY * imageFrame.height
                         
                         Rectangle()
-                            .stroke(Color.blue, lineWidth: 2)
+                            .stroke(AppTheme.accent1, lineWidth: AppTheme.boundingBoxStrokeWidth)
                             .frame(width: boxWidth, height: boxHeight)
                             .overlay(alignment: .trailing) {
                                 Button {
@@ -43,6 +43,7 @@ struct BoundingBoxEditorView: View {
                                         .foregroundColor(.red)
                                         .background(Circle().fill(Color.white))
                                 }
+                                .accessibilityLabel("Delete segment")
                                 .offset(x: 40)
                             }
                             .position(x: boxX + boxWidth / 2, y: boxY + boxHeight / 2)
@@ -50,7 +51,7 @@ struct BoundingBoxEditorView: View {
                     }
                     if let box = currentBox {
                         Rectangle()
-                            .stroke(Color.green, lineWidth: 3)
+                            .stroke(AppTheme.accent1.opacity(0.6), lineWidth: AppTheme.boundingBoxDraftStrokeWidth)
                             .frame(width: box.width, height: box.height)
                             .position(x: box.midX, y: box.midY)
                     }

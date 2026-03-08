@@ -14,60 +14,52 @@ struct SegmentReaderView: View {
     @Environment(DocumentStore.self) var store
     @State private var showToolPicker = false
 
-    // Segment sizing - leave room for toolbar
-    private let segmentHeightRatio: CGFloat = 0.85
-
-    init(document: SheetMusicDocument) {
+init(document: SheetMusicDocument) {
         self._document = Bindable(wrappedValue: document)
         self._session = State(wrappedValue: ReadingSession(document: document))
     }
 
     var body: some View {
         GeometryReader { geometry in
-            VStack(spacing: 0) {
-                // Minimal toolbar
-                HStack {
-                    NavigationLink {
-                        PageSelectView(document: document)
-                    } label: {
-                        Image(systemName: "square.and.pencil")
-                            .font(.title2)
-                    }
-                    .padding(.horizontal)
-
-                    Spacer()
-
-                    Button {
-                        showToolPicker.toggle()
-                    } label: {
-                        Image(systemName: "pencil.tip.crop.circle")
-                            .font(.title2)
-                    }
-                    .padding(.horizontal)
-                }
-                .padding(.vertical, 4)
-                .background(Color(.systemGray6))
-
-                // Scrollable, zoomable content using UIScrollView
-                ZoomableScrollView(zoomScale: Bindable(session).zoomScale) {
-                    HStack(spacing: 0) {
-                        ForEach(session.playbackSequence) { step in
-                            if let image = try? store.loadImage(step.segment.imagePath, from: document.id) {
-                                SegmentView(
-                                    segment: step.segment,
-                                    image: image,
-                                    tool: session.currentTool,
-                                    startX: step.startX,
-                                    endX: step.endX
-                                )
-                                .frame(height: geometry.size.height * segmentHeightRatio)
-                            }
+            ZoomableScrollView(zoomScale: Bindable(session).zoomScale) {
+                HStack(spacing: 0) {
+                    ForEach(session.playbackSequence) { step in
+                        if let image = try? store.loadImage(step.segment.imagePath, from: document.id) {
+                            SegmentView(
+                                segment: step.segment,
+                                image: image,
+                                tool: session.currentTool,
+                                startX: step.startX,
+                                endX: step.endX
+                            )
+                            .frame(height: geometry.size.height)
                         }
                     }
                 }
-                .onAppear {
-                    session.buildPlaybackSequence()
+            }
+            .onAppear {
+                session.buildPlaybackSequence()
+            }
+        }
+        .navigationBarBackButtonHidden(true)
+        .toolbar {
+            ToolbarItem(placement: .navigationBarLeading) {
+                NavigationLink {
+                    PageSelectView(document: document)
+                } label: {
+                    Text("Pages")
+                        .font(AppTheme.labelFont)
                 }
+                .accessibilityLabel("Return to page editor")
+            }
+            ToolbarItem(placement: .primaryAction) {
+                Button {
+                    showToolPicker.toggle()
+                } label: {
+                    Image(systemName: "pencil.tip.crop.circle")
+                        .font(.title2)
+                }
+                .accessibilityLabel("Open drawing tool picker")
             }
         }
         .sheet(isPresented: $showToolPicker) {

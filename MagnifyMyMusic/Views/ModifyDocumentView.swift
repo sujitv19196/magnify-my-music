@@ -34,25 +34,28 @@ struct ModifyDocumentView: View {
                     TextField("Name", text: $documentName)
                 }
 
-                Section("Images") {
+                Section("Add Images") {
                     PhotosPicker(
                         selection: $selectedItems,
                         maxSelectionCount: 20,
                         matching: .images
                     ) {
-                        Label("Select from Library", systemImage: "photo.on.rectangle")
+                        Text("Select from Library")
+                            .font(AppTheme.labelFont)
                     }
 
                     if VNDocumentCameraViewController.isSupported {
                         Button {
                             showingScanner = true
                         } label: {
-                            Label("Scan Document", systemImage: "doc.viewfinder")
+                            Text("Scan Document")
+                                .font(AppTheme.labelFont)
                         }
                     }
 
                     if !selectedImages.isEmpty {
                         Text("\(selectedImages.count) image\(selectedImages.count == 1 ? "" : "s") selected")
+                            .font(AppTheme.hintFont)
                             .foregroundColor(.secondary)
                     }
                 }

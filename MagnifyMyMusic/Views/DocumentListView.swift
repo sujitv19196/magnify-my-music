@@ -19,7 +19,7 @@ struct DocumentListView: View {
                         DocumentLoaderView(documentId: manifest.id)
                     } label: {
                         Text(manifest.name)
-                            .font(.headline)
+                            .font(AppTheme.bodyFont)
                     }
                 }
                 .onDelete(perform: deleteDocuments)
@@ -31,8 +31,10 @@ struct DocumentListView: View {
                     Button {
                         showingCreateSheet = true
                     } label: {
-                        Label("New Document", systemImage: "plus")
+                        Text("New Document")
+                            .font(AppTheme.labelFont)
                     }
+                    .accessibilityLabel("Create new document")
                 }
             }
             .sheet(isPresented: $showingCreateSheet) {

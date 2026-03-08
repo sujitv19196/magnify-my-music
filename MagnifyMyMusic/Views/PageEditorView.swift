@@ -50,7 +50,7 @@ struct PageEditorView: View {
                 showMarkerSheet = true
             } label: {
                 Text("Add Repeat or Jump")
-                    .font(.subheadline.weight(.medium))
+                    .font(AppTheme.labelFont)
                     .foregroundStyle(.white)
                     .padding(.horizontal, 20)
                     .padding(.vertical, 12)
@@ -65,8 +65,10 @@ struct PageEditorView: View {
                 NavigationLink {
                     SegmentReaderView(document: document)
                 } label: {
-                    Label("Read", systemImage: "book")
+                    Text("Read")
+                        .font(AppTheme.labelFont)
                 }
+                .accessibilityLabel("Read this document")
                 .disabled(document.segments.isEmpty)
             }
         }

@@ -75,7 +75,7 @@ struct MarkerPlacementView: View {
                     // ── Layer 2: placement hint ───────────────────────────
                     if selectedMarkerType != nil, currentPos == nil {
                         Text("Tap or drag within a segment to place")
-                            .font(.subheadline)
+                            .font(AppTheme.hintFont)
                             .foregroundStyle(.secondary)
                             .padding(.horizontal, 16).padding(.vertical, 10)
                             .background(.regularMaterial, in: Capsule())
@@ -88,8 +88,8 @@ struct MarkerPlacementView: View {
                         let segH   = seg.boundingBoxHeight * imageFrame.height
 
                         Rectangle()
-                            .fill(Color.accentColor.opacity(0.55))
-                            .frame(width: 8, height: segH)
+                            .fill(AppTheme.accent2.opacity(0.7))
+                            .frame(width: AppTheme.markerBarWidth, height: segH)
                             .allowsHitTesting(false)
                             .position(x: liveX, y: segTop + segH / 2)
                     }
@@ -136,14 +136,15 @@ struct MarkerPlacementView: View {
 
                 // Vertical line
                 Rectangle()
-                    .fill(Color.accentColor.opacity(0.55))
-                    .frame(width: 8, height: segH)
+                    .fill(AppTheme.accent2.opacity(0.7))
+                    .frame(width: AppTheme.markerBarWidth, height: segH)
+                    .accessibilityHidden(true)
                     .position(x: screenX, y: segTop + segH / 2)
 
                 // Label + delete badge at top of line
                 HStack(spacing: 4) {
                     Text(marker.type.displayName)
-                        .font(.caption.weight(.bold))
+                        .font(AppTheme.labelFont)
                         .foregroundStyle(.primary)
                     Button {
                         deleteMarker(marker, from: segment)
@@ -151,12 +152,13 @@ struct MarkerPlacementView: View {
                         Image(systemName: "xmark.circle.fill")
                             .foregroundStyle(.red)
                     }
+                    .accessibilityLabel("Delete \(marker.type.displayName) marker")
                     .buttonStyle(.plain)
                 }
-                .padding(.horizontal, 8).padding(.vertical, 4)
-                .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 6))
+                .padding(.horizontal, 12).padding(.vertical, 6)
+                .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 10))
                 .fixedSize()
-                .position(x: screenX - 60, y: segTop + 16)
+                .position(x: screenX - 72, y: segTop + 22)
             }
         }
     }
@@ -183,7 +185,7 @@ struct MarkerPlacementView: View {
             if let n = configValue {
                 HStack(spacing: 4) {
                     Text(configDisplayString(markerType: markerType, value: n))
-                        .font(.subheadline.weight(.semibold))
+                        .font(AppTheme.bodyFont)
                         .monospacedDigit()
                     Stepper(
                         configLabel(for: markerType),
@@ -205,11 +207,13 @@ struct MarkerPlacementView: View {
             Button {
                 selectedMarkerType = nil
             } label: {
-                Image(systemName: "xmark.circle.fill")
-                    .font(.title2)
-                    .foregroundStyle(.secondary)
-                    .background(Circle().fill(Color(uiColor: .systemBackground)))
+                Text("Cancel")
+                    .font(AppTheme.labelFont)
+                    .foregroundStyle(.white)
+                    .padding(.horizontal, 14).padding(.vertical, 8)
+                    .background(Capsule().fill(Color.secondary))
             }
+            .accessibilityLabel("Cancel marker placement")
             .buttonStyle(.plain)
         }
         .fixedSize()

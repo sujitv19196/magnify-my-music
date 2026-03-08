@@ -43,8 +43,7 @@ struct PageSelectView: View {
                                     }
                             }
                             Text("Page \(index + 1)")
-                                .font(.title3)
-                                .fontWeight(.medium)
+                                .font(AppTheme.displayFont)
                                 .foregroundStyle(.primary)
                         }
                     }
@@ -61,22 +60,28 @@ struct PageSelectView: View {
                 Button {
                     dismiss()
                 } label: {
-                    Label("Library", systemImage: "books.vertical")
+                    Text("Library")
+                        .font(AppTheme.labelFont)
                 }
+                .accessibilityLabel("Return to Library")
             }
             ToolbarItem(placement: .navigationBarLeading) {
                 Button {
                     showingEditSheet = true
                 } label: {
-                    Label("Edit", systemImage: "square.and.pencil")
+                    Text("Edit")
+                        .font(AppTheme.labelFont)
                 }
+                .accessibilityLabel("Edit document details")
             }
             ToolbarItem(placement: .primaryAction) {
                 NavigationLink {
                     SegmentReaderView(document: document)
                 } label: {
-                    Label("Read", systemImage: "book")
+                    Text("Read")
+                        .font(AppTheme.labelFont)
                 }
+                .accessibilityLabel("Start reading")
                 .disabled(document.segments.isEmpty)
             }
         }

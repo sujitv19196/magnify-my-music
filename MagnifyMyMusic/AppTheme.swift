@@ -1,0 +1,21 @@
+//
+//  AppTheme.swift
+//  MagnifyMyMusic
+//
+
+import SwiftUI
+
+enum AppTheme {
+    static let accent1 = Color(uiColor: .systemOrange)  // bounding boxes
+    static let accent2 = Color(uiColor: .systemTeal)    // markers
+
+    static let displayFont = Font.title2.weight(.bold)
+    static let bodyFont    = Font.body.weight(.semibold)
+    static let labelFont   = Font.body.weight(.bold)
+    static let hintFont    = Font.subheadline.weight(.medium)
+    static let captionFont = Font.callout.weight(.semibold)
+
+    static let markerBarWidth: CGFloat = 10
+    static let boundingBoxStrokeWidth: CGFloat = 2
+    static let boundingBoxDraftStrokeWidth: CGFloat = 3
+}

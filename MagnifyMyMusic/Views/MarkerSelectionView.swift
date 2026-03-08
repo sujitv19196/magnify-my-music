@@ -41,6 +41,7 @@ struct MarkerTypePickerView: View {
                     dismiss()
                 } label: {
                     Text(option.label)
+                        .font(AppTheme.bodyFont)
                         .foregroundStyle(.primary)
                 }
             }
