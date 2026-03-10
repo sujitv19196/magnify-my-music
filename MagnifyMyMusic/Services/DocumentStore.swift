@@ -158,20 +158,20 @@ class DocumentStore {
         documentList.removeAll { $0.id == id }
     }
         
-    /// Saves a PNG image into the document's bundle with a UUID-based filename.
-    /// - Returns: The filename (e.g. "A3F2...png") to store in `imagePaths`.
+    /// Saves a JPEG image into the document's bundle with a UUID-based filename.
+    /// - Returns: The filename (e.g. "A3F2...jpg") to store in `imagePaths`.
     @discardableResult
     func saveImage(_ image: UIImage, to documentId: UUID) throws -> String {
         let images = imagesURL(for: documentId)
         try fileManager.createDirectory(at: images, withIntermediateDirectories: true)
-        
-        let filename = "\(UUID().uuidString).png"
+
+        let filename = "\(UUID().uuidString).jpg"
         let url = images.appendingPathComponent(filename)
 
-        guard let data = image.pngData() else {
+        guard let data = image.jpegData(compressionQuality: 0.85) else {
             throw DocumentStoreError.imageCompressionFailed
         }
-        
+
         try data.write(to: url, options: .atomic)
         return filename
     }

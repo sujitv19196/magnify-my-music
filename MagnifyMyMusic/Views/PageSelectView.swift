@@ -11,6 +11,7 @@ struct PageSelectView: View {
     @Bindable var document: SheetMusicDocument
     @Environment(DocumentStore.self) var store: DocumentStore
     @Environment(\.dismiss) private var dismiss
+    @State private var thumbnails: [String: UIImage] = [:]
     @State private var showingEditSheet = false
     @State private var showingReorderSheet = false
     @State private var reorderItems: [PageItem] = []
@@ -28,7 +29,7 @@ struct PageSelectView: View {
                         PageEditorView(document: document, selectedImageIndex: index)
                     } label: {
                         VStack {
-                            if let image = try? store.loadImage(path, from: document.id) {
+                            if let image = thumbnails[path] {
                                 Image(uiImage: image)
                                     .resizable()
                                     .scaledToFit()
@@ -52,6 +53,17 @@ struct PageSelectView: View {
                 }
             }
             .padding()
+        }
+        .task {
+            let thumbSize = CGSize(width: 400, height: 600)
+            var cache: [String: UIImage] = [:]
+            for path in document.imagePaths {
+                if cache[path] == nil,
+                   let full = try? store.loadImage(path, from: document.id) {
+                    cache[path] = await full.byPreparingThumbnail(ofSize: thumbSize) ?? full
+                }
+            }
+            thumbnails = cache
         }
         .navigationBarBackButtonHidden(true)
         .sheet(isPresented: $showingEditSheet) {

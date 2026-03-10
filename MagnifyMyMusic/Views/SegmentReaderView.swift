@@ -14,6 +14,7 @@ struct SegmentReaderView: View {
     @Environment(DocumentStore.self) var store
     @Environment(\.dismiss) private var dismiss
     @Environment(\.dismissToRoot) private var dismissToRoot
+    @State private var imageCache: [String: UIImage] = [:]
     @State private var showToolPicker = false
     @State private var showScrollSettings = false
 
@@ -27,7 +28,7 @@ struct SegmentReaderView: View {
             ZoomableScrollView(zoomScale: Bindable(session).zoomScale) {
                 HStack(spacing: 0) {
                     ForEach(session.playbackSequence) { step in
-                        if let image = try? store.loadImage(step.segment.imagePath, from: document.id) {
+                        if let image = imageCache[step.segment.imagePath] {
                             SegmentView(
                                 segment: step.segment,
                                 image: image,
@@ -42,6 +43,14 @@ struct SegmentReaderView: View {
             }
             .onAppear {
                 session.buildPlaybackSequence()
+                var cache: [String: UIImage] = [:]
+                for step in session.playbackSequence {
+                    let path = step.segment.imagePath
+                    if cache[path] == nil {
+                        cache[path] = try? store.loadImage(path, from: document.id)
+                    }
+                }
+                imageCache = cache
             }
         }
         .navigationBarBackButtonHidden(true)
