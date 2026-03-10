@@ -30,6 +30,12 @@ enum AppTheme {
     static let hintFont    = Font.callout.weight(.semibold)
     static let captionFont = Font.callout.weight(.semibold)
 
+    static var screenScale: CGFloat { UIScreen.main.scale }
+    static var screenWidth: CGFloat { UIScreen.main.bounds.width }
+
+    static var thumbnailMaxPixelSize: CGFloat { (screenWidth / 2) * screenScale }
+    static var reorderMaxPixelSize: CGFloat { 80 * screenScale }
+
     static let markerBarWidth: CGFloat = 10
     static let boundingBoxStrokeWidth: CGFloat = 2
     static let boundingBoxDraftStrokeWidth: CGFloat = 3

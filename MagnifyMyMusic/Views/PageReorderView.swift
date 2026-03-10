@@ -56,7 +56,7 @@ struct PageReorderView: View {
         }
         .onAppear {
             for item in items {
-                images[item.path] = try? store.loadImage(item.path, from: documentId)
+                images[item.path] = store.loadImage(item.path, from: documentId, maxPixelSize: AppTheme.reorderMaxPixelSize)
             }
         }
     }

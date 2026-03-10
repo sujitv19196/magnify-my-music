@@ -187,6 +187,13 @@ class DocumentStore {
         return image
     }
     
+    /// Loads a downsampled image from the document's bundle.
+    /// The image is decoded at `maxPixelSize` resolution so the full bitmap is never in memory.
+    func loadImage(_ filename: String, from documentId: UUID, maxPixelSize: CGFloat) -> UIImage? {
+        let url = imagesURL(for: documentId).appendingPathComponent(filename)
+        return UIImage.downsampledImage(at: url, maxPixelSize: maxPixelSize)
+    }
+
     /// Deletes a single image from the document's bundle.
     func deleteImage(_ filename: String, from documentId: UUID) throws {
         let url = imagesURL(for: documentId).appendingPathComponent(filename)

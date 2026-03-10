@@ -55,12 +55,10 @@ struct PageSelectView: View {
             .padding()
         }
         .task {
-            let thumbSize = CGSize(width: 400, height: 600)
             var cache: [String: UIImage] = [:]
             for path in document.imagePaths {
-                if cache[path] == nil,
-                   let full = try? store.loadImage(path, from: document.id) {
-                    cache[path] = await full.byPreparingThumbnail(ofSize: thumbSize) ?? full
+                if cache[path] == nil {
+                    cache[path] = store.loadImage(path, from: document.id, maxPixelSize: AppTheme.thumbnailMaxPixelSize)
                 }
             }
             thumbnails = cache
