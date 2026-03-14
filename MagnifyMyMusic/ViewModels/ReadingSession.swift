@@ -13,7 +13,8 @@ class ReadingSession {
     var document: SheetMusicDocument
 
     // Drawing tool state
-    var currentTool: PKInkingTool
+    var currentTool: PKTool
+    var fingerDrawingEnabled: Bool = false
 
     // Reading/playback state
     var currentSegmentIndex: Int = 0

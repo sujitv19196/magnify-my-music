@@ -15,9 +15,11 @@ private let maximumZoomScale: CGFloat = 10.0
 struct ZoomableScrollView<Content: View>: UIViewRepresentable {
     let content: Content
     @Binding var zoomScale: CGFloat
-    
-    init(zoomScale: Binding<CGFloat>, @ViewBuilder content: () -> Content) {
+    var isScrollEnabled: Bool = true
+
+    init(zoomScale: Binding<CGFloat>, isScrollEnabled: Bool = true, @ViewBuilder content: () -> Content) {
         self._zoomScale = zoomScale
+        self.isScrollEnabled = isScrollEnabled
         self.content = content()
     }
     
@@ -54,6 +56,7 @@ struct ZoomableScrollView<Content: View>: UIViewRepresentable {
     func updateUIView(_ scrollView: UIScrollView, context: Context) {
         // Update hosted content
         context.coordinator.hostingController?.rootView = content
+        scrollView.isScrollEnabled = isScrollEnabled
 
         // Update zoom if changed externally, then re-center after layout completes
         if scrollView.zoomScale != zoomScale {

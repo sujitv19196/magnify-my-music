@@ -11,7 +11,9 @@ import PencilKit
 struct SegmentView: View {
     @Bindable var segment: Segment
     let image: UIImage
-    let tool: PKInkingTool
+    let tool: PKTool
+    var drawingPolicy: PKCanvasViewDrawingPolicy = .pencilOnly
+    var containerHeight: CGFloat = 0
     var startX: Double = 0.0
     var endX: Double = 1.0
 
@@ -31,25 +33,22 @@ struct SegmentView: View {
     var body: some View {
         if let croppedImage = image.cropped(to: cropRect) {
             let aspectRatio = croppedImage.size.width / croppedImage.size.height
-            
-            ZStack {
-                    Image(uiImage: croppedImage)
-                        .resizable()
-                    .aspectRatio(aspectRatio, contentMode: .fit)
-                        .allowsHitTesting(false)
-                
-                GeometryReader { geometry in
-                PencilKitCanvas(
-                    canvasView: $canvas,
-                    drawing: $drawing,
-                    tool: tool,
-                    onSave: saveDrawing
-                )
-            }
-        }
-            .aspectRatio(aspectRatio, contentMode: .fit)
+
+            Image(uiImage: croppedImage)
+                .resizable()
+                .aspectRatio(aspectRatio, contentMode: .fit)
+                .allowsHitTesting(false)
+                .overlay {
+                    PencilKitCanvas(
+                        canvasView: $canvas,
+                        drawing: $drawing,
+                        tool: tool,
+                        drawingPolicy: drawingPolicy,
+                        onSave: saveDrawing
+                    )
+                }
             .task {
-            loadDrawing()
+                loadDrawing()
             }
         } else {
             Rectangle()
@@ -58,7 +57,7 @@ struct SegmentView: View {
                 .overlay(Text("Failed to load segment"))
         }
     }
-    
+
     private func loadDrawing() {
         if let data = segment.drawingData,
            let savedDrawing = try? PKDrawing(data: data) {
@@ -66,9 +65,8 @@ struct SegmentView: View {
             canvas.drawing = savedDrawing
         }
     }
-    
+
     private func saveDrawing() {
         segment.drawingData = drawing.dataRepresentation()
     }
 }
-

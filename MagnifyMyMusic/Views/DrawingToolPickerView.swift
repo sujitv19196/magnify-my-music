@@ -9,14 +9,27 @@ import SwiftUI
 import PencilKit
 
 struct DrawingToolPickerView: View {
-    @Binding var currentTool: PKInkingTool
+    @Binding var currentTool: PKTool
     @Environment(\.dismiss) var dismiss
-    
-    @State private var showEraser = false
-    
+
+    // Track the last inking tool so we can restore it when switching away from eraser
+    @State private var lastInkingTool: PKInkingTool
+    @State private var isEraser: Bool
+
     let colors: [UIColor] = [.red, .blue, .green, .black, .orange, .purple, .brown, .systemPink]
-    let widths: [CGFloat] = [1, 2, 3, 5]
+    let widths: [CGFloat] = [2, 5, 10, 20]
     let types: [PKInkingTool.InkType] = [.pen, .pencil, .marker]
+
+    init(currentTool: Binding<PKTool>) {
+        self._currentTool = currentTool
+        if let inkingTool = currentTool.wrappedValue as? PKInkingTool {
+            self._lastInkingTool = State(wrappedValue: inkingTool)
+            self._isEraser = State(wrappedValue: false)
+        } else {
+            self._lastInkingTool = State(wrappedValue: PKInkingTool(.pen, color: .red, width: 2))
+            self._isEraser = State(wrappedValue: true)
+        }
+    }
     
     var body: some View {
         NavigationStack {
@@ -28,12 +41,13 @@ struct DrawingToolPickerView: View {
                     HStack(spacing: 20) {
                         ForEach(types, id: \.self) { type in
                             Button {
-                                currentTool = PKInkingTool(
+                                lastInkingTool = PKInkingTool(
                                     type,
-                                    color: currentTool.color,
-                                    width: currentTool.width
+                                    color: lastInkingTool.color,
+                                    width: lastInkingTool.width
                                 )
-                                showEraser = false
+                                isEraser = false
+                                currentTool = lastInkingTool
                             } label: {
                                 VStack(spacing: 8) {
                                     Image(systemName: icon(for: type))
@@ -44,14 +58,14 @@ struct DrawingToolPickerView: View {
                                 .frame(maxWidth: .infinity)
                                 .padding()
                                 .background(
-                                    currentTool.inkType == type && !showEraser
+                                    lastInkingTool.inkType == type && !isEraser
                                         ? Color.blue.opacity(0.2)
                                         : Color.clear
                                 )
                                 .cornerRadius(8)
                             }
                             .foregroundColor(
-                                currentTool.inkType == type && !showEraser ? .blue : .primary
+                                lastInkingTool.inkType == type && !isEraser ? .blue : .primary
                             )
                         }
                     }
@@ -71,19 +85,20 @@ struct DrawingToolPickerView: View {
                                 .frame(width: 50, height: 50)
                                 .overlay(
                                     Circle().strokeBorder(
-                                        currentTool.color == color && !showEraser
+                                        lastInkingTool.color == color && !isEraser
                                             ? Color.blue
                                             : Color.clear,
                                         lineWidth: 3
                                     )
                                 )
                                 .onTapGesture {
-                                    currentTool = PKInkingTool(
-                                        currentTool.inkType,
+                                    lastInkingTool = PKInkingTool(
+                                        lastInkingTool.inkType,
                                         color: color,
-                                        width: currentTool.width
+                                        width: lastInkingTool.width
                                     )
-                                    showEraser = false
+                                    isEraser = false
+                                    currentTool = lastInkingTool
                                 }
                         }
                     }
@@ -100,10 +115,10 @@ struct DrawingToolPickerView: View {
                         ForEach(widths, id: \.self) { width in
                             Circle()
                                 .fill(Color.black)
-                                .frame(width: width * 10, height: width * 10)
+                                .frame(width: max(10, width * 3), height: max(10, width * 3))
                                 .overlay(
                                     Circle().strokeBorder(
-                                        currentTool.width == width && !showEraser
+                                        lastInkingTool.width == width && !isEraser
                                             ? Color.blue
                                             : Color.clear,
                                         lineWidth: 2
@@ -111,12 +126,13 @@ struct DrawingToolPickerView: View {
                                 )
                                 .frame(maxWidth: .infinity)
                                 .onTapGesture {
-                                    currentTool = PKInkingTool(
-                                        currentTool.inkType,
-                                        color: currentTool.color,
+                                    lastInkingTool = PKInkingTool(
+                                        lastInkingTool.inkType,
+                                        color: lastInkingTool.color,
                                         width: width
                                     )
-                                    showEraser = false
+                                    isEraser = false
+                                    currentTool = lastInkingTool
                                 }
                         }
                     }
@@ -126,7 +142,8 @@ struct DrawingToolPickerView: View {
                 .cornerRadius(12)
                 
                 Button {
-                    showEraser = true
+                    isEraser = true
+                    currentTool = PKEraserTool(.bitmap)
                 } label: {
                     HStack {
                         Image(systemName: "eraser.fill")
@@ -135,8 +152,8 @@ struct DrawingToolPickerView: View {
                     .font(.headline)
                     .frame(maxWidth: .infinity)
                     .padding()
-                    .background(showEraser ? Color.blue : Color(.systemGray6))
-                    .foregroundColor(showEraser ? .white : .primary)
+                    .background(isEraser ? Color.blue : Color(.systemGray6))
+                    .foregroundColor(isEraser ? .white : .primary)
                     .cornerRadius(12)
                 }
                 

@@ -25,7 +25,7 @@ struct SegmentReaderView: View {
 
     var body: some View {
         GeometryReader { geometry in
-            ZoomableScrollView(zoomScale: Bindable(session).zoomScale) {
+            ZoomableScrollView(zoomScale: Bindable(session).zoomScale, isScrollEnabled: !session.fingerDrawingEnabled) {
                 HStack(spacing: 0) {
                     ForEach(session.playbackSequence) { step in
                         if let image = imageCache[step.segment.imagePath] {
@@ -33,6 +33,8 @@ struct SegmentReaderView: View {
                                 segment: step.segment,
                                 image: image,
                                 tool: session.currentTool,
+                                drawingPolicy: session.fingerDrawingEnabled ? .anyInput : .pencilOnly,
+                                containerHeight: geometry.size.height,
                                 startX: step.startX,
                                 endX: step.endX
                             )
@@ -81,6 +83,15 @@ struct SegmentReaderView: View {
                         .font(.title2)
                 }
                 .accessibilityLabel("Adjust pedal scroll distance")
+            }
+            ToolbarItem(placement: .primaryAction) {
+                Button {
+                    session.fingerDrawingEnabled.toggle()
+                } label: {
+                    Image(systemName: session.fingerDrawingEnabled ? "hand.draw.fill" : "hand.draw")
+                        .font(.title2)
+                }
+                .accessibilityLabel(session.fingerDrawingEnabled ? "Disable finger drawing" : "Enable finger drawing")
             }
             ToolbarItem(placement: .primaryAction) {
                 Button {
