@@ -38,7 +38,7 @@ Documents are stored as `.magnify` bundles under `Documents/MagnifyDocuments/<uu
   manifest.json      ← lightweight metadata for the list view
   document.json      ← full document tree (segments + markers)
   images/
-    <uuid>.png       ← page images saved as PNG (lossless)
+    <uuid>.jpg       ← page images saved as JPEG (0.85 compression)
 ```
 `DocumentStore` is `@Observable` and injected app-wide via `.environment(documentStore)`.
 
@@ -56,10 +56,14 @@ All tests for this algorithm are in `MagnifyMyMusicTests/NavigationGraphWalkerTe
 
 ```
 DocumentListView
-  └── PageSelectView          (grid of page thumbnail images)
-        ├── PageEditorView    (draw/delete bounding boxes; "Add Repeat or Jump" button)
-        │     └── BoundingBoxEditorView  (drag to create segments; shows MarkerTypePickerView sheet)
-        └── SegmentReaderView (playback; horizontal scroll through PlaybackSteps; Apple Pencil annotation)
+  └── DocumentLoaderView          (loads full document async)
+        └── PageSelectView        (2-column grid of page thumbnails)
+              ├── PageEditorView  (draw bounding boxes + place markers)
+              │     ├── BoundingBoxEditorView  (two-finger drag to create segments)
+              │     └── MarkerPlacementView    (single-finger drag to place markers)
+              ├── PageReorderView              (drag-to-reorder pages)
+              ├── ModifyDocumentView           (rename, add images, scan)
+              └── SegmentReaderView            (playback + Apple Pencil annotation + foot pedal nav)
 ```
 
 ### Observable pattern
@@ -72,7 +76,27 @@ DocumentListView
 
 - **`ZoomableScrollView`** — wraps `UIScrollView` to give SwiftUI pinch-to-zoom + horizontal scroll for the reader.
 - **`PencilKitCanvas`** — wraps `PKCanvasView` with `drawingPolicy = .pencilOnly` so touch scrolls the reader while Apple Pencil draws annotations.
+- **`EditorScrollView`** — wraps UIScrollView + UIHostingController for PageEditorView; uses CAShapeLayer for live draft rectangles during two-finger drag (avoids SwiftUI re-renders).
+- **`TwoFingerBoxGestureRecognizer`** — custom UIGestureRecognizer for drawing bounding boxes with two fingers. 60pt minimum separation threshold.
+- **`MarkerDragOverlay`** — UIViewRepresentable with single-finger drag tracking and CAShapeLayer rendering for marker placement.
+- **`KeyCommandController`** — UIViewControllerRepresentable that captures arrow/page keys for foot pedal navigation. Posts `.pedalScroll` notifications.
 
 ### Previews
 
 `PreviewHelper` (compiled only in `#if DEBUG`) creates a fixed-UUID document and writes placeholder PNG images from `TestSheetMusic1`/`TestSheetMusic2` asset catalog entries. All view previews use `PreviewHelper.createPreviewStore()` and `PreviewHelper.createSampleDocument()`.
+
+### Performance optimizations
+
+- **Image downsampling** (`UIImage+Downsampling.swift`) — uses ImageIO `CGImageSourceCreateThumbnailAtIndex` for memory-efficient thumbnail loading.
+- **Image caching** — views cache loaded images in `@State` to prevent reload thrashing.
+- **JPEG compression** — images saved at 0.85 quality instead of lossless PNG.
+
+### Foot pedal navigation
+
+- `KeyCommandController` captures arrow/page-down/page-up key commands.
+- `ReadingSession.pedalScrollDistance` (persisted per-document in UserDefaults).
+- `ZoomableScrollView` listens for `.pedalScroll` notifications and scrolls horizontally.
+
+### Theme system
+
+`AppTheme.swift` provides centralized colors (`accent1` orange, `accent2` teal), fonts, dimensions, and computed pixel-size constants for thumbnails.
