@@ -95,6 +95,13 @@ struct SegmentReaderView: View {
         .sheet(isPresented: $showToolPicker) {
             DrawingToolPickerView(currentTool: $session.currentTool)
         }
+        .background {
+            KeyCommandOverlay(
+                onAdvance: { session.advanceByPedal() },
+                onRetreat: { session.retreatByPedal() }
+            )
+            .frame(width: 0, height: 0)
+        }
         .sheet(isPresented: $showScrollSettings) {
             VStack(spacing: 24) {
                 Text("Pedal Scroll Distance")
@@ -111,10 +118,6 @@ struct SegmentReaderView: View {
             }
             .padding()
             .presentationDetents([.height(200)])
-        }
-        .onKeyPress(.space) {
-            session.advanceByPedal()
-            return .handled
         }
         .onDisappear {
             try? store.save(document)

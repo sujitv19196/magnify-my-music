@@ -71,9 +71,31 @@ struct ZoomableScrollView<Content: View>: UIViewRepresentable {
     class Coordinator: NSObject, UIScrollViewDelegate {
         @Binding var zoomScale: CGFloat
         var hostingController: UIHostingController<Content>?
-        
+        private var scrollObserver: Any?
+
         init(zoomScale: Binding<CGFloat>) {
             self._zoomScale = zoomScale
+            super.init()
+
+            // Listen for pedal scroll notifications and scroll the UIScrollView directly
+            scrollObserver = NotificationCenter.default.addObserver(
+                forName: .pedalScroll,
+                object: nil,
+                queue: .main
+            ) { [weak self] notification in
+                guard let delta = notification.userInfo?["delta"] as? CGFloat,
+                      let scrollView = self?.hostingController?.view.superview as? UIScrollView else { return }
+                var offset = scrollView.contentOffset
+                let maxX = max(0, scrollView.contentSize.width - scrollView.bounds.width)
+                offset.x = min(max(0, offset.x + delta), maxX)
+                scrollView.setContentOffset(offset, animated: true)
+            }
+        }
+
+        deinit {
+            if let observer = scrollObserver {
+                NotificationCenter.default.removeObserver(observer)
+            }
         }
         
         func viewForZooming(in scrollView: UIScrollView) -> UIView? {
@@ -110,3 +132,6 @@ struct ZoomableScrollView<Content: View>: UIViewRepresentable {
     }
 }
 
+extension Notification.Name {
+    static let pedalScroll = Notification.Name("pedalScroll")
+}

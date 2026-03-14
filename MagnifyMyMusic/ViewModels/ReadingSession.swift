@@ -17,7 +17,6 @@ class ReadingSession {
 
     // Reading/playback state
     var currentSegmentIndex: Int = 0
-    var horizontalScrollOffset: CGFloat = 0.0
     private(set) var playbackSequence: [PlaybackStep] = []
     
     // User preferences stored in UserDefaults
@@ -37,7 +36,19 @@ class ReadingSession {
     }
     
     func advanceByPedal() {
-        horizontalScrollOffset += pedalScrollDistance
+        NotificationCenter.default.post(
+            name: .pedalScroll,
+            object: nil,
+            userInfo: ["delta": pedalScrollDistance]
+        )
+    }
+
+    func retreatByPedal() {
+        NotificationCenter.default.post(
+            name: .pedalScroll,
+            object: nil,
+            userInfo: ["delta": -pedalScrollDistance]
+        )
     }
     
     func buildPlaybackSequence() {
