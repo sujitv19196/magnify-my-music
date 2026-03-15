@@ -69,7 +69,7 @@ struct SegmentReaderView: View {
                     Button {
                         dismiss()
                     } label: {
-                        Text("Pages")
+                        Text("Edit")
                             .font(AppTheme.labelFont)
                     }
                     .accessibilityLabel("Return to page editor")

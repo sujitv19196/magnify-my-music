@@ -48,7 +48,9 @@ struct DocumentListView: View {
                 }
             }
             .sheet(isPresented: $showingCreateSheet) {
-                ModifyDocumentView()
+                ModifyDocumentView(onCreated: { createdId in
+                    path.append(createdId)
+                })
             }
             .alert(item: $documentToDelete) { manifest in
                 Alert(

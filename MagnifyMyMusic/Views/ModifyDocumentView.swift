@@ -14,6 +14,7 @@ struct ModifyDocumentView: View {
     @Environment(\.dismiss) private var dismiss
 
     var document: SheetMusicDocument? = nil
+    var onCreated: ((UUID) -> Void)? = nil
 
     @State private var documentName = ""
     @State private var selectedItems: [PhotosPickerItem] = []
@@ -22,8 +23,9 @@ struct ModifyDocumentView: View {
 
     private var isCreateMode: Bool { document == nil }
 
-    init(document: SheetMusicDocument? = nil) {
+    init(document: SheetMusicDocument? = nil, onCreated: ((UUID) -> Void)? = nil) {
         self.document = document
+        self.onCreated = onCreated
         _documentName = State(initialValue: document?.name ?? "")
     }
 
@@ -113,6 +115,10 @@ struct ModifyDocumentView: View {
                 try? store.saveImage(image, to: doc.id)
             }
             try? store.save(doc)
+            let createdId = doc.id
+            dismiss()
+            onCreated?(createdId)
+            return
         }
         dismiss()
     }
