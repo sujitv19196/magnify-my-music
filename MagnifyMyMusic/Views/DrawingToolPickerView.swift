@@ -12,13 +12,11 @@ struct DrawingToolPickerView: View {
     @Binding var currentTool: PKTool
     @Environment(\.dismiss) var dismiss
 
-    // Track the last inking tool so we can restore it when switching away from eraser
     @State private var lastInkingTool: PKInkingTool
     @State private var isEraser: Bool
 
     let colors: [UIColor] = [.red, .blue, .green, .black, .orange, .purple, .brown, .systemPink]
-    let widths: [CGFloat] = [2, 5, 10, 20]
-    let types: [PKInkingTool.InkType] = [.pen, .pencil, .marker]
+    let widths: [CGFloat] = [20, 40, 60, 80]
 
     init(currentTool: Binding<PKTool>) {
         self._currentTool = currentTool
@@ -26,74 +24,34 @@ struct DrawingToolPickerView: View {
             self._lastInkingTool = State(wrappedValue: inkingTool)
             self._isEraser = State(wrappedValue: false)
         } else {
-            self._lastInkingTool = State(wrappedValue: PKInkingTool(.pen, color: .red, width: 2))
+            self._lastInkingTool = State(wrappedValue: PKInkingTool(.pen, color: AppTheme.defaultDrawingColor,  width: AppTheme.defaultDrawingWidth))
             self._isEraser = State(wrappedValue: true)
         }
     }
-    
+
     var body: some View {
         NavigationStack {
-            VStack(spacing: 30) {
-                VStack(alignment: .leading, spacing: 12) {
-                    Text("Tool Type")
-                        .font(.headline)
-                    
-                    HStack(spacing: 20) {
-                        ForEach(types, id: \.self) { type in
-                            Button {
-                                lastInkingTool = PKInkingTool(
-                                    type,
-                                    color: lastInkingTool.color,
-                                    width: lastInkingTool.width
-                                )
-                                isEraser = false
-                                currentTool = lastInkingTool
-                            } label: {
-                                VStack(spacing: 8) {
-                                    Image(systemName: icon(for: type))
-                                        .font(.title)
-                                    Text(name(for: type))
-                                        .font(.caption)
-                                }
-                                .frame(maxWidth: .infinity)
-                                .padding()
-                                .background(
-                                    lastInkingTool.inkType == type && !isEraser
-                                        ? Color.blue.opacity(0.2)
-                                        : Color.clear
-                                )
-                                .cornerRadius(8)
-                            }
-                            .foregroundColor(
-                                lastInkingTool.inkType == type && !isEraser ? .blue : .primary
-                            )
-                        }
-                    }
-                }
-                .padding()
-                .background(Color(.systemGray6))
-                .cornerRadius(12)
-                
+            ScrollView {
+            VStack(spacing: 24) {
+                // Color section
                 VStack(alignment: .leading, spacing: 12) {
                     Text("Color")
                         .font(.headline)
-                    
+
                     LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 4), spacing: 16) {
                         ForEach(colors, id: \.self) { color in
+                            let colorSelected = lastInkingTool.color == color && !isEraser
                             Circle()
                                 .fill(Color(color))
-                                .frame(width: 50, height: 50)
-                                .overlay(
-                                    Circle().strokeBorder(
-                                        lastInkingTool.color == color && !isEraser
-                                            ? Color.blue
-                                            : Color.clear,
-                                        lineWidth: 3
-                                    )
+                                .frame(width: 44, height: 44)
+                                .padding(6)
+                                .background(
+                                    RoundedRectangle(cornerRadius: 10)
+                                        .fill(colorSelected ? Color.white : Color.clear)
                                 )
                                 .onTapGesture {
                                     lastInkingTool = PKInkingTool(
-                                        lastInkingTool.inkType,
+                                        .pen,
                                         color: color,
                                         width: lastInkingTool.width
                                     )
@@ -106,44 +64,48 @@ struct DrawingToolPickerView: View {
                 .padding()
                 .background(Color(.systemGray6))
                 .cornerRadius(12)
-                
+
+                // Width section with squiggle icons
                 VStack(alignment: .leading, spacing: 12) {
                     Text("Width")
                         .font(.headline)
-                    
-                    HStack(spacing: 20) {
+
+                    HStack(spacing: 12) {
                         ForEach(widths, id: \.self) { width in
-                            Circle()
-                                .fill(Color.black)
-                                .frame(width: max(10, width * 3), height: max(10, width * 3))
-                                .overlay(
-                                    Circle().strokeBorder(
-                                        lastInkingTool.width == width && !isEraser
-                                            ? Color.blue
-                                            : Color.clear,
-                                        lineWidth: 2
-                                    )
+                            let isSelected = lastInkingTool.width == width && !isEraser
+                            let displayWidth = width / 10  // Scale down for icon display
+                            Button {
+                                lastInkingTool = PKInkingTool(
+                                    .pen,
+                                    color: lastInkingTool.color,
+                                    width: width
                                 )
-                                .frame(maxWidth: .infinity)
-                                .onTapGesture {
-                                    lastInkingTool = PKInkingTool(
-                                        lastInkingTool.inkType,
-                                        color: lastInkingTool.color,
-                                        width: width
+                                isEraser = false
+                                currentTool = lastInkingTool
+                                dismiss()
+                            } label: {
+                                SquiggleShape()
+                                    .stroke(Color(lastInkingTool.color), lineWidth: displayWidth)
+                                    .frame(width: 44, height: 44)
+                                    .padding(6)
+                                    .background(
+                                        RoundedRectangle(cornerRadius: 10)
+                                            .fill(isSelected ? Color.white : Color.clear)
                                     )
-                                    isEraser = false
-                                    currentTool = lastInkingTool
-                                }
+                            }
+                            .frame(maxWidth: .infinity)
                         }
                     }
                 }
                 .padding()
                 .background(Color(.systemGray6))
                 .cornerRadius(12)
-                
+
+                // Eraser button
                 Button {
                     isEraser = true
                     currentTool = PKEraserTool(.bitmap)
+                    dismiss()
                 } label: {
                     HStack {
                         Image(systemName: "eraser.fill")
@@ -156,10 +118,10 @@ struct DrawingToolPickerView: View {
                     .foregroundColor(isEraser ? .white : .primary)
                     .cornerRadius(12)
                 }
-                
-                Spacer()
+
             }
             .padding()
+            }
             .navigationTitle("Drawing Tools")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -168,25 +130,30 @@ struct DrawingToolPickerView: View {
                 }
             }
         }
-        .presentationDetents([.large])
-    }
-    
-    private func icon(for type: PKInkingTool.InkType) -> String {
-        switch type {
-        case .pen: return "pencil"
-        case .pencil: return "pencil.tip"
-        case .marker: return "highlighter"
-        default: return "pencil"
-        }
-    }
-    
-    private func name(for type: PKInkingTool.InkType) -> String {
-        switch type {
-        case .pen: return "Pen"
-        case .pencil: return "Pencil"
-        case .marker: return "Marker"
-        default: return "Pen"
-        }
+        .presentationDetents([.medium])
     }
 }
 
+/// A short S-curve shape used as a thickness icon
+struct SquiggleShape: Shape {
+    func path(in rect: CGRect) -> Path {
+        var path = Path()
+        let midY = rect.midY
+        let startX = rect.minX + 4
+        let endX = rect.maxX - 4
+        let amplitude: CGFloat = rect.height * 0.25
+
+        path.move(to: CGPoint(x: startX, y: midY))
+        path.addCurve(
+            to: CGPoint(x: rect.midX, y: midY),
+            control1: CGPoint(x: startX + (endX - startX) * 0.2, y: midY - amplitude),
+            control2: CGPoint(x: startX + (endX - startX) * 0.35, y: midY - amplitude)
+        )
+        path.addCurve(
+            to: CGPoint(x: endX, y: midY),
+            control1: CGPoint(x: startX + (endX - startX) * 0.65, y: midY + amplitude),
+            control2: CGPoint(x: startX + (endX - startX) * 0.8, y: midY + amplitude)
+        )
+        return path
+    }
+}

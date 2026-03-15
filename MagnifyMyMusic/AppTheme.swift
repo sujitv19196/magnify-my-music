@@ -36,6 +36,20 @@ enum AppTheme {
     static var thumbnailMaxPixelSize: CGFloat { (screenWidth / 2) * screenScale }
     static var reorderMaxPixelSize: CGFloat { 80 * screenScale }
 
+    static let defaultDrawingWidth: CGFloat = 40
+    static let defaultDrawingColor: UIColor = .purple
+    static let defaultZoomScale: CGFloat = 0.5
+    static let defaultPedalScrollDistance: CGFloat = 200
+
+    // MARK: - UserDefaults keys
+    static let pedalScrollDistanceKey = "pedalScrollDistance"
+    static let zoomScaleKey = "zoomScale"
+    static let drawingToolWidthKey = "drawingToolWidth"
+    static let drawingToolColorKey = "drawingToolColor"
+
+    static func pedalScrollDistanceKey(for documentId: UUID) -> String { "\(pedalScrollDistanceKey)-\(documentId)" }
+    static func zoomScaleKey(for documentId: UUID) -> String { "\(zoomScaleKey)-\(documentId)" }
+
     static let markerBarWidth: CGFloat = 10
     static let boundingBoxStrokeWidth: CGFloat = 2
     static let boundingBoxDraftStrokeWidth: CGFloat = 3

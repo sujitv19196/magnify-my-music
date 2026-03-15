@@ -128,7 +128,7 @@ struct SegmentReaderView: View {
                 .padding(.horizontal)
             }
             .padding()
-            .presentationDetents([.height(200)])
+            .presentationDetents([.height(140)])
         }
         .onDisappear {
             try? store.save(document)
