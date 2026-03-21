@@ -11,6 +11,11 @@ enum EditorSelection: Equatable {
     case segment(UUID)
     case marker(UUID)
     case none
+
+    var isSegment: Bool {
+        if case .segment = self { return true }
+        return false
+    }
 }
 
 struct PageEditorView: View {

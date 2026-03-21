@@ -60,6 +60,7 @@ struct MarkerPlacementView: View {
 
                     // ── Layer 1: saved markers ────────────────────────────
                     savedMarkersOverlay(imageFrame: imageFrame)
+                        .allowsHitTesting(!editorSelection.isSegment)
 
                     // ── Layer 2: static bar at committed position (shown after finger lifts) ──
                     if let pos = committedPosition, let seg = currentSeg {
@@ -87,7 +88,9 @@ struct MarkerPlacementView: View {
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .onChange(of: selectedMarkerType) { _, newType in
                     committedPosition = nil
-                    editorSelection = .none
+                    if newType != nil {
+                        editorSelection = .none
+                    }
                     if let type = newType {
                         switch type {
                         case .repeatBackward, .volta: configValue = 1
@@ -127,9 +130,7 @@ struct MarkerPlacementView: View {
                         .frame(width: 44, height: segH)
                         .contentShape(Rectangle())
                         .onTapGesture {
-                            withAnimation(.easeInOut(duration: 0.15)) {
                                 editorSelection = .marker(marker.id)
-                            }
                         }
                 }
                 .position(x: screenX, y: segTop + segH / 2)
@@ -158,7 +159,6 @@ struct MarkerPlacementView: View {
                         x: min(max(screenX, imageFrame.minX + 80), imageFrame.maxX - 80),
                         y: segTop - 24
                     )
-                    .transition(.scale.combined(with: .opacity))
                 }
             }
         }
@@ -278,9 +278,11 @@ struct MarkerPlacementView: View {
             finalType = markerType
         }
 
-        segment.markers.append(NavigationMarker(type: finalType, xPosition: xPosition))
+        let newMarker = NavigationMarker(type: finalType, xPosition: xPosition)
+        segment.markers.append(newMarker)
         try? store.save(document)
         selectedMarkerType = nil
+        editorSelection = .marker(newMarker.id)
     }
 
     private var segmentsForCurrentImage: [Segment] {
