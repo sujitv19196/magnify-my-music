@@ -7,6 +7,12 @@
 
 import SwiftUI
 
+enum EditorSelection: Equatable {
+    case segment(UUID)
+    case marker(UUID)
+    case none
+}
+
 struct PageEditorView: View {
     @Bindable var document: SheetMusicDocument
     @Environment(DocumentStore.self) var store: DocumentStore
@@ -14,6 +20,7 @@ struct PageEditorView: View {
     @State private var showMarkerSheet = false
     @State private var selectedMarkerType: NavigationMarkerType?
     @State private var committedBox: CGRect? = nil
+    @State private var editorSelection: EditorSelection = .none
 
     let selectedImageIndex: Int
 
@@ -30,12 +37,14 @@ struct PageEditorView: View {
                         BoundingBoxEditorView(
                             document: document,
                             imagePath: document.imagePaths[selectedImageIndex],
-                            committedBox: $committedBox
+                            committedBox: $committedBox,
+                            editorSelection: $editorSelection
                         )
                         MarkerPlacementView(
                             document: document,
                             imagePath: document.imagePaths[selectedImageIndex],
-                            selectedMarkerType: $selectedMarkerType
+                            selectedMarkerType: $selectedMarkerType,
+                            editorSelection: $editorSelection
                         )
                     }
                 }

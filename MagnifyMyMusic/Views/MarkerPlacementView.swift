@@ -28,6 +28,7 @@ struct MarkerPlacementView: View {
     @Bindable var document: SheetMusicDocument
     let imagePath: String
     @Binding var selectedMarkerType: NavigationMarkerType?
+    @Binding var editorSelection: EditorSelection
 
     @Environment(DocumentStore.self) var store
     @State private var cachedImage: UIImage?
@@ -86,6 +87,7 @@ struct MarkerPlacementView: View {
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .onChange(of: selectedMarkerType) { _, newType in
                     committedPosition = nil
+                    editorSelection = .none
                     if let type = newType {
                         switch type {
                         case .repeatBackward, .volta: configValue = 1
@@ -112,32 +114,52 @@ struct MarkerPlacementView: View {
                 let screenX = imageFrame.minX
                     + (segment.boundingBoxX + marker.xPosition * segment.boundingBoxWidth)
                     * imageFrame.width
+                let isSelected = editorSelection == .marker(marker.id)
 
-                // Vertical line
-                Rectangle()
-                    .fill(AppTheme.accent2.opacity(0.7))
-                    .frame(width: AppTheme.markerBarWidth, height: segH)
-                    .accessibilityHidden(true)
-                    .position(x: screenX, y: segTop + segH / 2)
+                // Vertical line with wider tap target
+                ZStack {
+                    Rectangle()
+                        .fill(AppTheme.accent2.opacity(0.7))
+                        .frame(width: AppTheme.markerBarWidth, height: segH)
+                        .accessibilityHidden(true)
 
-                // Label + delete badge at top of line
-                HStack(spacing: 4) {
-                    Text(marker.type.displayName)
-                        .font(AppTheme.labelFont)
-                        .foregroundStyle(.primary)
-                    Button {
-                        deleteMarker(marker, from: segment)
-                    } label: {
-                        Image(systemName: "xmark.circle.fill")
-                            .foregroundStyle(.red)
-                    }
-                    .accessibilityLabel("Delete \(marker.type.displayName) marker")
-                    .buttonStyle(.plain)
+                    Color.clear
+                        .frame(width: 44, height: segH)
+                        .contentShape(Rectangle())
+                        .onTapGesture {
+                            withAnimation(.easeInOut(duration: 0.15)) {
+                                editorSelection = .marker(marker.id)
+                            }
+                        }
                 }
-                .padding(.horizontal, 12).padding(.vertical, 6)
-                .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 10))
-                .fixedSize()
-                .position(x: screenX - 72, y: segTop + 22)
+                .position(x: screenX, y: segTop + segH / 2)
+
+                // Label + delete badge — only shown when selected
+                if isSelected {
+                    HStack(spacing: 6) {
+                        Text(marker.type.displayName)
+                            .font(AppTheme.labelFont)
+                            .foregroundStyle(.primary)
+                        Button {
+                            deleteMarker(marker, from: segment)
+                            editorSelection = .none
+                        } label: {
+                            Image(systemName: "xmark.circle.fill")
+                                .font(AppTheme.bodyFont)
+                                .foregroundStyle(.red)
+                        }
+                        .accessibilityLabel("Delete \(marker.type.displayName) marker")
+                        .buttonStyle(.plain)
+                    }
+                    .padding(.horizontal, 14).padding(.vertical, 8)
+                    .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 10))
+                    .fixedSize()
+                    .position(
+                        x: min(max(screenX, imageFrame.minX + 80), imageFrame.maxX - 80),
+                        y: segTop - 24
+                    )
+                    .transition(.scale.combined(with: .opacity))
+                }
             }
         }
     }
@@ -194,8 +216,11 @@ struct MarkerPlacementView: View {
             .buttonStyle(.plain)
         }
         .fixedSize()
-        // Centre the panel on the bar's X, 12 pt below the bar bottom
-        .position(x: position.x, y: barBotY + 30)
+        // Centre the panel on the bar's X, clamped to stay within image bounds
+        .position(
+            x: min(max(position.x, imageFrame.minX + 140), imageFrame.maxX - 140),
+            y: barBotY + 30
+        )
     }
 
     // MARK: - Helpers

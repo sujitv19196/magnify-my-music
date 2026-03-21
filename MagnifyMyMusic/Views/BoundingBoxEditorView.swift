@@ -12,6 +12,7 @@ struct BoundingBoxEditorView: View {
     let imagePath: String
 
     @Binding var committedBox: CGRect?
+    @Binding var editorSelection: EditorSelection
 
     @Environment(DocumentStore.self) var store
     @State private var cachedImage: UIImage?
@@ -25,27 +26,44 @@ struct BoundingBoxEditorView: View {
                     Image(uiImage: image)
                         .resizable()
                         .aspectRatio(contentMode: .fit)
+                        .contentShape(Rectangle())
+                        .onTapGesture {
+                            withAnimation(.easeInOut(duration: 0.15)) {
+                                editorSelection = .none
+                            }
+                        }
 
                     ForEach(segmentsForCurrentImage) { segment in
                         let boxWidth = segment.boundingBoxWidth * imageFrame.width
                         let boxHeight = segment.boundingBoxHeight * imageFrame.height
                         let boxX = imageFrame.minX + segment.boundingBoxX * imageFrame.width
                         let boxY = imageFrame.minY + segment.boundingBoxY * imageFrame.height
+                        let isSelected = editorSelection == .segment(segment.id)
 
                         Rectangle()
-                            .stroke(AppTheme.accent1, lineWidth: AppTheme.boundingBoxStrokeWidth)
+                            .stroke(AppTheme.accent1, lineWidth: isSelected ? AppTheme.boundingBoxStrokeWidth * 2 : AppTheme.boundingBoxStrokeWidth)
                             .frame(width: boxWidth, height: boxHeight)
-                            .overlay(alignment: .topTrailing) {
-                                Button {
-                                    deleteSegment(segment)
-                                } label: {
-                                    Image(systemName: "xmark.circle.fill")
-                                        .font(.system(size: 28))
-                                        .foregroundColor(.red)
-                                        .background(Circle().fill(Color.white))
+                            .contentShape(Rectangle())
+                            .onTapGesture {
+                                withAnimation(.easeInOut(duration: 0.15)) {
+                                    editorSelection = .segment(segment.id)
                                 }
-                                .accessibilityLabel("Delete segment")
-                                .padding(6)
+                            }
+                            .overlay(alignment: .top) {
+                                if isSelected {
+                                    Button {
+                                        deleteSegment(segment)
+                                        editorSelection = .none
+                                    } label: {
+                                        Image(systemName: "xmark.circle.fill")
+                                            .font(AppTheme.displayFont)
+                                            .foregroundColor(.red)
+                                            .background(Circle().fill(Color.white))
+                                    }
+                                    .accessibilityLabel("Delete segment")
+                                    .offset(y: -24)
+                                    .transition(.scale.combined(with: .opacity))
+                                }
                             }
                             .position(x: boxX + boxWidth / 2, y: boxY + boxHeight / 2)
                             .id(segment.id)
@@ -54,6 +72,7 @@ struct BoundingBoxEditorView: View {
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .onChange(of: committedBox) { _, newBox in
+                    editorSelection = .none
                     guard let box = newBox else { return }
                     let clamped = clampToImage(rect: box, imageFrame: imageFrame)
                     if clamped.width > 20, clamped.height > 20 {
