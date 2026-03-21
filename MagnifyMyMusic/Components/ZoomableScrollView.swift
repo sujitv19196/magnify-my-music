@@ -12,16 +12,6 @@ import UIKit
 private let minimumZoomScale: CGFloat = 0.1
 private let maximumZoomScale: CGFloat = 10.0
 
-/// UIScrollView subclass that recenters content on every layout pass (e.g. rotation).
-private class CenteringScrollView: UIScrollView {
-    var onLayoutSubviews: ((UIScrollView) -> Void)?
-
-    override func layoutSubviews() {
-        super.layoutSubviews()
-        onLayoutSubviews?(self)
-    }
-}
-
 struct ZoomableScrollView<Content: View>: UIViewRepresentable {
     let content: Content
     @Binding var zoomScale: CGFloat
@@ -34,7 +24,7 @@ struct ZoomableScrollView<Content: View>: UIViewRepresentable {
     }
     
     func makeUIView(context: Context) -> UIScrollView {
-        let scrollView = CenteringScrollView()
+        let scrollView = UIScrollView()
         scrollView.delegate = context.coordinator
         scrollView.minimumZoomScale = minimumZoomScale
         scrollView.maximumZoomScale = maximumZoomScale
@@ -60,13 +50,9 @@ struct ZoomableScrollView<Content: View>: UIViewRepresentable {
             hostingController.view.bottomAnchor.constraint(equalTo: scrollView.contentLayoutGuide.bottomAnchor)
         ])
         
-        scrollView.onLayoutSubviews = { [weak coordinator = context.coordinator] sv in
-            coordinator?.centerContent(in: sv)
-        }
-
         return scrollView
     }
-
+    
     func updateUIView(_ scrollView: UIScrollView, context: Context) {
         // Update hosted content
         context.coordinator.hostingController?.rootView = content
