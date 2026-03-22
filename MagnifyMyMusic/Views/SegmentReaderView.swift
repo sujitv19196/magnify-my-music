@@ -17,6 +17,7 @@ struct SegmentReaderView: View {
     @State private var imageCache: [String: UIImage] = [:]
     @State private var showToolPicker = false
     @State private var showScrollSettings = false
+    @State private var toolbarVisible = true
 
     init(document: SheetMusicDocument) {
         self._document = Bindable(wrappedValue: document)
@@ -43,6 +44,9 @@ struct SegmentReaderView: View {
                     }
                 }
             }
+            .onTapGesture {
+                withAnimation { toolbarVisible.toggle() }
+            }
             .onAppear {
                 session.buildPlaybackSequence()
                 var cache: [String: UIImage] = [:]
@@ -56,6 +60,7 @@ struct SegmentReaderView: View {
             }
         }
         .navigationBarBackButtonHidden(true)
+        .toolbar(toolbarVisible ? .visible : .hidden, for: .navigationBar)
         .toolbar {
             ToolbarItem(placement: .navigationBarLeading) {
                 HStack(spacing: 16) {
