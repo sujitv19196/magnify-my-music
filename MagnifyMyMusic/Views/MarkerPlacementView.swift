@@ -7,6 +7,36 @@
 
 import SwiftUI
 
+// MARK: - Clamped Position Modifier
+
+private struct ClampedPositionModifier: ViewModifier {
+    let x: CGFloat
+    let y: CGFloat
+    let minX: CGFloat
+    let maxX: CGFloat
+
+    @State private var contentWidth: CGFloat = 0
+
+    func body(content: Content) -> some View {
+        content
+            .background(GeometryReader { geo in
+                Color.clear
+                    .onAppear { contentWidth = geo.size.width }
+                    .onChange(of: geo.size.width) { _, w in contentWidth = w }
+            })
+            .position(
+                x: min(max(x, minX + contentWidth / 2), maxX - contentWidth / 2),
+                y: y
+            )
+    }
+}
+
+private extension View {
+    func clampedPosition(x: CGFloat, y: CGFloat, minX: CGFloat, maxX: CGFloat) -> some View {
+        modifier(ClampedPositionModifier(x: x, y: y, minX: minX, maxX: maxX))
+    }
+}
+
 /// Returns the CGRect (in container coordinates) where the image is rendered aspect-fit.
 func calculateImageFrame(containerSize: CGSize, imageSize: CGSize) -> CGRect {
     let imageAspect = imageSize.width / imageSize.height
@@ -155,9 +185,11 @@ struct MarkerPlacementView: View {
                     .padding(.horizontal, 14).padding(.vertical, 8)
                     .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 10))
                     .fixedSize()
-                    .position(
-                        x: min(max(screenX, imageFrame.minX + 80), imageFrame.maxX - 80),
-                        y: segTop - 24
+                    .clampedPosition(
+                        x: screenX,
+                        y: segTop - 24,
+                        minX: imageFrame.minX,
+                        maxX: imageFrame.maxX
                     )
                 }
             }
@@ -217,9 +249,11 @@ struct MarkerPlacementView: View {
         }
         .fixedSize()
         // Centre the panel on the bar's X, clamped to stay within image bounds
-        .position(
-            x: min(max(position.x, imageFrame.minX + 140), imageFrame.maxX - 140),
-            y: barBotY + 30
+        .clampedPosition(
+            x: position.x,
+            y: barBotY + 30,
+            minX: imageFrame.minX,
+            maxX: imageFrame.maxX
         )
     }
 
