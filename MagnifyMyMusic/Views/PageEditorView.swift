@@ -26,6 +26,8 @@ struct PageEditorView: View {
     @State private var selectedMarkerType: NavigationMarkerType?
     @State private var committedBox: CGRect? = nil
     @State private var editorSelection: EditorSelection = .none
+    @State private var isDrawingBox = false
+    @State private var showHints: Bool = UserDefaults.standard.object(forKey: AppTheme.showHintsKey) as? Bool ?? true
 
     let selectedImageIndex: Int
 
@@ -37,7 +39,7 @@ struct PageEditorView: View {
     var body: some View {
         ZStack(alignment: .bottom) {
             if !document.imagePaths.isEmpty, selectedImageIndex < document.imagePaths.count {
-                EditorScrollView(onCommit: { committedBox = $0 }) {
+                EditorScrollView(onCommit: { committedBox = $0 }, onDragStateChanged: { isDrawingBox = $0 }) {
                     ZStack {
                         BoundingBoxEditorView(
                             document: document,
@@ -61,6 +63,22 @@ struct PageEditorView: View {
                 )
             }
 
+
+            VStack {
+                if showHints && !isDrawingBox && selectedMarkerType == nil && editorSelection == .none {
+                    Text("Use two fingers to draw a box around each row of music. Then mark any repeats or jumps for each row.")
+                        .font(AppTheme.hintFont)
+                        .foregroundStyle(.primary)
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal, 20)
+                        .padding(.vertical, 10)
+                        .background(.ultraThinMaterial.opacity(0.8), in: RoundedRectangle(cornerRadius: 12))
+                        .padding(.horizontal, 24)
+                        .padding(.top, 8)
+                        .transition(.opacity)
+                }
+                Spacer()
+            }
 
             Button {
                 showMarkerSheet = true

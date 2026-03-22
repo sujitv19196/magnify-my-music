@@ -12,6 +12,8 @@ struct DocumentListView: View {
     @State private var showingCreateSheet = false
     @State private var path = NavigationPath()
     @State private var documentToDelete: DocumentManifest? = nil
+    @State private var showingSettings = false
+    @State private var showHints: Bool = UserDefaults.standard.object(forKey: AppTheme.showHintsKey) as? Bool ?? true
 
     var body: some View {
         NavigationStack(path: $path) {
@@ -37,15 +39,41 @@ struct DocumentListView: View {
                 DocumentLoaderView(documentId: id)
             }
             .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button {
+                        showingSettings = true
+                    } label: {
+                        Image(systemName: "gearshape")
+                    }
+                    .accessibilityLabel("Settings")
+                }
                 ToolbarItem(placement: .primaryAction) {
                     Button {
                         showingCreateSheet = true
                     } label: {
-                        Text("New Document")
-                            .font(AppTheme.labelFont)
+                        Image(systemName: "plus")
                     }
                     .accessibilityLabel("Create new document")
                 }
+            }
+            .sheet(isPresented: $showingSettings) {
+                NavigationStack {
+                    Form {
+                        Toggle("Show Hints", isOn: $showHints)
+                            .font(AppTheme.bodyFont)
+                            .onChange(of: showHints) { _, newValue in
+                                UserDefaults.standard.set(newValue, forKey: AppTheme.showHintsKey)
+                            }
+                    }
+                    .navigationTitle("Settings")
+                    .navigationBarTitleDisplayMode(.inline)
+                    .toolbar {
+                        ToolbarItem(placement: .confirmationAction) {
+                            Button("Done") { showingSettings = false }
+                        }
+                    }
+                }
+                .presentationDetents([.medium])
             }
             .sheet(isPresented: $showingCreateSheet) {
                 ModifyDocumentView(onCreated: { createdId in

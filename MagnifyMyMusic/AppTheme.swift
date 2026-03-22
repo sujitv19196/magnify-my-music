@@ -42,6 +42,7 @@ enum AppTheme {
     static let defaultPedalScrollDistance: CGFloat = 200
 
     // MARK: - UserDefaults keys
+    static let showHintsKey = "showHints"
     static let pedalScrollDistanceKey = "pedalScrollDistance"
     static let zoomScaleKey = "zoomScale"
     static let drawingToolWidthKey = "drawingToolWidth"

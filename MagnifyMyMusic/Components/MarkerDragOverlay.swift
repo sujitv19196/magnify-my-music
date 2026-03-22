@@ -30,12 +30,17 @@ struct MarkerDragOverlay: UIViewRepresentable {
         view.layer.addSublayer(barLayer)
         context.coordinator.barLayer = barLayer
 
-        let gr = UIPanGestureRecognizer(target: context.coordinator, action: #selector(Coordinator.handlePan(_:)))
-        gr.maximumNumberOfTouches = 1
-        gr.cancelsTouchesInView = false
-        gr.isEnabled = isActive
-        view.addGestureRecognizer(gr)
-        context.coordinator.gestureRecognizer = gr
+        let pan = UIPanGestureRecognizer(target: context.coordinator, action: #selector(Coordinator.handlePan(_:)))
+        pan.maximumNumberOfTouches = 1
+        pan.cancelsTouchesInView = false
+        pan.isEnabled = isActive
+        view.addGestureRecognizer(pan)
+        context.coordinator.panRecognizer = pan
+
+        let tap = UITapGestureRecognizer(target: context.coordinator, action: #selector(Coordinator.handleTap(_:)))
+        tap.isEnabled = isActive
+        view.addGestureRecognizer(tap)
+        context.coordinator.tapRecognizer = tap
 
         return view
     }
@@ -44,7 +49,8 @@ struct MarkerDragOverlay: UIViewRepresentable {
         context.coordinator.imageFrame = imageFrame
         context.coordinator.segments = segments
         context.coordinator.onCommit = onCommit
-        context.coordinator.gestureRecognizer?.isEnabled = isActive
+        context.coordinator.panRecognizer?.isEnabled = isActive
+        context.coordinator.tapRecognizer?.isEnabled = isActive
         // When not placing a marker, make the view fully transparent to touches
         // so delete buttons in BoundingBoxEditorView remain tappable.
         uiView.isUserInteractionEnabled = isActive
@@ -59,12 +65,21 @@ struct MarkerDragOverlay: UIViewRepresentable {
         var segments: [Segment]
         var onCommit: (CGPoint) -> Void
         var barLayer: CAShapeLayer?
-        weak var gestureRecognizer: UIPanGestureRecognizer?
+        weak var panRecognizer: UIPanGestureRecognizer?
+        weak var tapRecognizer: UITapGestureRecognizer?
 
         init(imageFrame: CGRect, segments: [Segment], onCommit: @escaping (CGPoint) -> Void) {
             self.imageFrame = imageFrame
             self.segments = segments
             self.onCommit = onCommit
+        }
+
+        @objc func handleTap(_ gr: UITapGestureRecognizer) {
+            guard let view = gr.view else { return }
+            let point = gr.location(in: view)
+            if segmentAt(point) != nil {
+                onCommit(point)
+            }
         }
 
         @objc func handlePan(_ gr: UIPanGestureRecognizer) {

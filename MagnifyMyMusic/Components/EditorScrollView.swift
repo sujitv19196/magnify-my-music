@@ -13,13 +13,16 @@ import UIKit
 /// — no SwiftUI state changes occur during the gesture, keeping CPU low.
 struct EditorScrollView<Content: View>: UIViewRepresentable {
     let onCommit: (CGRect) -> Void
+    var onDragStateChanged: ((Bool) -> Void)?
     let content: Content
 
     init(
         onCommit: @escaping (CGRect) -> Void,
+        onDragStateChanged: ((Bool) -> Void)? = nil,
         @ViewBuilder content: () -> Content
     ) {
         self.onCommit = onCommit
+        self.onDragStateChanged = onDragStateChanged
         self.content = content()
     }
 
@@ -57,15 +60,18 @@ struct EditorScrollView<Content: View>: UIViewRepresentable {
             let path = UIBezierPath(rect: rect)
             coordinator?.draftLayer?.path = path.cgPath
             coordinator?.draftLayer?.isHidden = false
+            coordinator?.onDragStateChanged?(true)
         }
         gr.onCommit = { [weak coordinator] rect in
             coordinator?.draftLayer?.isHidden = true
             coordinator?.draftLayer?.path = nil
+            coordinator?.onDragStateChanged?(false)
             coordinator?.onCommit?(rect)
         }
         gr.onCancel = { [weak coordinator] in
             coordinator?.draftLayer?.isHidden = true
             coordinator?.draftLayer?.path = nil
+            coordinator?.onDragStateChanged?(false)
         }
         rootView.addGestureRecognizer(gr)
 
@@ -75,19 +81,22 @@ struct EditorScrollView<Content: View>: UIViewRepresentable {
     func updateUIView(_ rootView: UIView, context: Context) {
         context.coordinator.host?.rootView = content
         context.coordinator.onCommit = onCommit
+        context.coordinator.onDragStateChanged = onDragStateChanged
     }
 
     func makeCoordinator() -> Coordinator {
-        Coordinator(onCommit: onCommit)
+        Coordinator(onCommit: onCommit, onDragStateChanged: onDragStateChanged)
     }
 
     class Coordinator: NSObject {
         var host: UIHostingController<Content>?
         var draftLayer: CAShapeLayer?
         var onCommit: ((CGRect) -> Void)?
+        var onDragStateChanged: ((Bool) -> Void)?
 
-        init(onCommit: @escaping (CGRect) -> Void) {
+        init(onCommit: @escaping (CGRect) -> Void, onDragStateChanged: ((Bool) -> Void)? = nil) {
             self.onCommit = onCommit
+            self.onDragStateChanged = onDragStateChanged
         }
     }
 }
