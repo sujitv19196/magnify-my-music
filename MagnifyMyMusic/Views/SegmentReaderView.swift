@@ -14,7 +14,7 @@ struct SegmentReaderView: View {
     @Environment(DocumentStore.self) var store
     @Environment(\.dismiss) private var dismiss
     @Environment(\.dismissToRoot) private var dismissToRoot
-    @State private var imageCache: [String: UIImage] = [:]
+    @State private var stepImageCache: [UUID: UIImage] = [:]
     @State private var showToolPicker = false
     @State private var showScrollSettings = false
     @State private var toolbarVisible = true
@@ -29,15 +29,12 @@ struct SegmentReaderView: View {
             ZoomableScrollView(zoomScale: Bindable(session).zoomScale, isScrollEnabled: !session.fingerDrawingEnabled) {
                 HStack(spacing: 0) {
                     ForEach(session.playbackSequence) { step in
-                        if let image = imageCache[step.segment.imagePath] {
+                        if let image = stepImageCache[step.id] {
                             SegmentView(
                                 segment: step.segment,
                                 image: image,
                                 tool: session.currentTool,
-                                drawingPolicy: session.fingerDrawingEnabled ? .anyInput : .pencilOnly,
-                                containerHeight: geometry.size.height,
-                                startX: step.startX,
-                                endX: step.endX
+                                drawingPolicy: session.fingerDrawingEnabled ? .anyInput : .pencilOnly
                             )
                             .frame(height: geometry.size.height)
                         }
@@ -49,14 +46,26 @@ struct SegmentReaderView: View {
             }
             .onAppear {
                 session.buildPlaybackSequence()
-                var cache: [String: UIImage] = [:]
+                var pageImages: [String: UIImage] = [:]
+                var stepCache: [UUID: UIImage] = [:]
                 for step in session.playbackSequence {
                     let path = step.segment.imagePath
-                    if cache[path] == nil {
-                        cache[path] = try? store.loadImage(path, from: document.id)
+                    if pageImages[path] == nil {
+                        pageImages[path] = try? store.loadImage(path, from: document.id)
+                    }
+                    guard let pageImage = pageImages[path] else { continue }
+                    let box = step.segment.boundingBox
+                    let cropRect = CGRect(
+                        x: box.minX + step.startX * box.width,
+                        y: box.minY,
+                        width: (step.endX - step.startX) * box.width,
+                        height: box.height
+                    )
+                    if let cropped = pageImage.cropped(to: cropRect) {
+                        stepCache[step.id] = cropped
                     }
                 }
-                imageCache = cache
+                stepImageCache = stepCache
             }
         }
         .navigationBarBackButtonHidden(true)

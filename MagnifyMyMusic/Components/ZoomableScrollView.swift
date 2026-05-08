@@ -106,11 +106,13 @@ struct ZoomableScrollView<Content: View>: UIViewRepresentable {
         }
         
         func scrollViewDidZoom(_ scrollView: UIScrollView) {
-            // Update binding in real-time
-            zoomScale = scrollView.zoomScale
-            
-            // Center content when smaller than viewport
+            // Don't push the binding mid-gesture: it fans out @Observable
+            // invalidation and forces a full SwiftUI re-render every frame.
             centerContent(in: scrollView)
+        }
+
+        func scrollViewDidEndZooming(_ scrollView: UIScrollView, with view: UIView?, atScale scale: CGFloat) {
+            zoomScale = scale
         }
         
         func centerContent(in scrollView: UIScrollView) {
